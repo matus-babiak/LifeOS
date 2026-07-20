@@ -1,36 +1,48 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# LifeOS
 
-## Getting Started
+Osobný operačný systém pre rast, sebarealizáciu a vedomé budovanie života.
 
-First, run the development server:
+> „Kým sa stávam a aké kroky ma k tomu každý deň približujú?"
+
+Produktové rozhodnutia a plán etáp: [PRODUCT.md](PRODUCT.md)
+
+## Lokálny vývoj
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install
+npm run db:push   # vytvorí tabuľky v lokálnej PGlite databáze (./.pglite)
+npm run dev       # http://localhost:3000
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Lokálne netreba nič nastavovať — `.env.local` má `AUTH_DISABLED=1` (bez prihlásenia)
+a bez `DATABASE_URL` sa použije vstavaná PGlite databáza.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Nasadenie na Vercel (jednorazový setup)
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+1. **Vercel projekt** — vercel.com → Add New Project → importuj repo `matus-babiak/LifeOS`.
+2. **Databáza** — v projekte na Verceli: Storage → Create Database → **Neon (Postgres)**.
+   Vercel automaticky doplní `DATABASE_URL` do env premenných.
+3. **GitHub OAuth App** — github.com → Settings → Developer settings → OAuth Apps → New:
+   - Application name: `LifeOS`
+   - Homepage URL: `https://<tvoja-domena>.vercel.app`
+   - Authorization callback URL: `https://<tvoja-domena>.vercel.app/api/auth/callback/github`
+4. **Env premenné na Verceli** (Settings → Environment Variables):
+   - `AUTH_GITHUB_ID` — Client ID z OAuth App
+   - `AUTH_GITHUB_SECRET` — Client Secret z OAuth App
+   - `AUTH_SECRET` — vygeneruj: `openssl rand -base64 32`
+   - `ALLOWED_GITHUB_LOGIN` — `matus-babiak` (jediný účet, ktorý smie dnu)
+5. **Tabuľky v produkčnej DB** — lokálne spusti:
+   ```bash
+   DATABASE_URL="<connection string z Vercel/Neon>" npm run db:push
+   ```
+6. Redeploy. Hotovo — appka je súkromná, pustí len tvoj GitHub účet.
 
-## Learn More
+## Ikona na ploche (iPhone)
 
-To learn more about Next.js, take a look at the following resources:
+Safari → otvor appku → Zdieľať → **Pridať na plochu**. LifeOS sa potom otvára
+celoobrazovkovo ako natívna aplikácia (PWA manifest + apple-touch-icon sú súčasťou).
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Stack
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Next.js 16 (App Router) · TypeScript · Tailwind CSS 4 · Drizzle ORM ·
+Neon Postgres (produkcia) / PGlite (lokálne) · Auth.js (GitHub OAuth) · lucide-react
