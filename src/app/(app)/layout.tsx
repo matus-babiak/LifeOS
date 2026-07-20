@@ -1,10 +1,12 @@
+import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
 import AppShell, { SignOutButton } from "@/components/AppShell";
+import { authDisabled, SESSION_COOKIE } from "@/auth";
+import { requireUser } from "@/lib/session";
+import { ensureSeeded } from "@/db/seed";
 
 // Všetko pod (app) je osobný, per-request obsah - nikdy sa nesmie prerendrovať staticky
 export const dynamic = "force-dynamic";
-import { authDisabled, signOut } from "@/auth";
-import { requireUser } from "@/lib/session";
-import { ensureSeeded } from "@/db/seed";
 
 export default async function AppLayout({
   children,
@@ -18,7 +20,8 @@ export default async function AppLayout({
     <form
       action={async () => {
         "use server";
-        await signOut({ redirectTo: "/login" });
+        (await cookies()).delete(SESSION_COOKIE);
+        redirect("/login");
       }}
     >
       <SignOutButton />

@@ -1,21 +1,27 @@
 import { NextResponse } from "next/server";
-import { auth, authDisabled } from "@/auth";
+import type { NextRequest } from "next/server";
+import { authDisabled, SESSION_COOKIE } from "@/auth";
+import { verifyToken } from "@/lib/session-token";
 
-// Optimistická ochrana rout - plná kontrola session je v server actions a stránkach.
-export const proxy = auth((req) => {
+// Ochrana rout: bez platnej session cookie pustí len /login.
+export async function proxy(req: NextRequest) {
   if (authDisabled) return NextResponse.next();
   const { pathname } = req.nextUrl;
-  if (!req.auth && pathname !== "/login") {
+  const ok = await verifyToken(
+    req.cookies.get(SESSION_COOKIE)?.value,
+    process.env.AUTH_SECRET ?? "",
+  );
+  if (!ok && pathname !== "/login") {
     return NextResponse.redirect(new URL("/login", req.nextUrl));
   }
-  if (req.auth && pathname === "/login") {
+  if (ok && pathname === "/login") {
     return NextResponse.redirect(new URL("/", req.nextUrl));
   }
   return NextResponse.next();
-});
+}
 
 export const config = {
   matcher: [
-    "/((?!api/auth|_next/static|_next/image|favicon|icon|apple-icon|manifest|.*\\.png$|.*\\.svg$).*)",
+    "/((?!_next/static|_next/image|favicon|icon|apple-icon|manifest|.*\\.png$|.*\\.svg$).*)",
   ],
 };

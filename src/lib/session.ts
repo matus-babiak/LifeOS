@@ -1,14 +1,14 @@
+import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import { auth, authDisabled } from "@/auth";
+import { authDisabled, SESSION_COOKIE } from "@/auth";
+import { verifyToken } from "@/lib/session-token";
 
-/** Ochrana stránok a server actions. Vracia prihláseného používateľa. */
+/** Ochrana stránok a server actions. Presmeruje na /login, ak nie je platná session. */
 export async function requireUser() {
-  if (authDisabled) {
-    return { name: "dev", email: null, image: null };
-  }
-  const session = await auth();
-  if (!session?.user) {
+  if (authDisabled) return { name: "dev" };
+  const token = (await cookies()).get(SESSION_COOKIE)?.value;
+  if (!(await verifyToken(token, process.env.AUTH_SECRET ?? ""))) {
     redirect("/login");
   }
-  return session.user;
+  return { name: "matus" };
 }

@@ -1,9 +1,36 @@
-import { KeyRound } from "lucide-react";
-import { signIn } from "@/auth";
+import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
+import { LogIn } from "lucide-react";
+import { SESSION_COOKIE, SESSION_MAX_AGE } from "@/auth";
+import { createToken } from "@/lib/session-token";
 
 export const metadata = { title: "Prihlásenie" };
 
-export default function LoginPage() {
+async function login(formData: FormData) {
+  "use server";
+  const pw = String(formData.get("password") ?? "");
+  const expected = process.env.APP_PASSWORD ?? "";
+  if (!expected || pw !== expected) {
+    redirect("/login?error=1");
+  }
+  const token = await createToken(process.env.AUTH_SECRET ?? "", 90);
+  (await cookies()).set(SESSION_COOKIE, token, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+    path: "/",
+    maxAge: SESSION_MAX_AGE,
+  });
+  redirect("/");
+}
+
+export default async function LoginPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ error?: string }>;
+}) {
+  const { error } = await searchParams;
+
   return (
     <div className="flex min-h-dvh flex-col items-center justify-center gap-10 px-6">
       <div className="flex flex-col items-center gap-4 text-center">
@@ -17,18 +44,28 @@ export default function LoginPage() {
           Kým sa stávam a aké kroky ma k tomu dnes približujú?
         </p>
       </div>
-      <form
-        action={async () => {
-          "use server";
-          await signIn("github", { redirectTo: "/" });
-        }}
-      >
+
+      <form action={login} className="flex w-full max-w-xs flex-col gap-3">
+        <input
+          type="password"
+          name="password"
+          autoFocus
+          required
+          placeholder="Heslo"
+          aria-label="Heslo"
+          className="w-full rounded-xl border border-line bg-surface px-4 py-3 text-sm outline-none focus:border-accent"
+        />
+        {error && (
+          <p className="text-center text-sm text-danger">
+            Nesprávne heslo, skús znova.
+          </p>
+        )}
         <button
           type="submit"
-          className="flex items-center gap-3 rounded-xl border border-line bg-surface px-6 py-3 text-sm font-medium shadow-sm transition-colors hover:border-accent"
+          className="flex items-center justify-center gap-2 rounded-xl bg-accent px-6 py-3 text-sm font-medium text-white transition-opacity hover:opacity-90 dark:text-[#10141a]"
         >
-          <KeyRound className="h-4 w-4" />
-          Prihlásiť sa cez GitHub
+          <LogIn className="h-4 w-4" />
+          Prihlásiť sa
         </button>
       </form>
     </div>
