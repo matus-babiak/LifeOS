@@ -46,7 +46,7 @@ export default async function TodayPage() {
             <p className="text-sm">
               Energia{" "}
               <span className="font-medium tabular-nums">
-                {checkin?.energy ?? "–"}/10
+                {checkin?.energy ?? "-"}/10
               </span>
               {checkin?.identityFocus && (
                 <>
@@ -67,7 +67,7 @@ export default async function TodayPage() {
           <h2 className="mb-4 font-medium">Dnešný fokus</h2>
           {focus.length === 0 && (
             <p className="mb-3 text-sm text-muted">
-              Žiadne položky — pridaj si 1 až 3 veci, na ktorých dnes záleží.
+              Žiadne položky - pridaj si 1 až 3 veci, na ktorých dnes záleží.
             </p>
           )}
           <ul className="flex flex-col gap-2">
@@ -122,7 +122,7 @@ export default async function TodayPage() {
         <h2 className="mb-4 font-medium">Návyky</h2>
         {dueToday.length === 0 && (
           <p className="text-sm text-muted">
-            Zatiaľ žiadne návyky — vytvor si prvý v sekcii Návyky.
+            Zatiaľ žiadne návyky - vytvor si prvý v sekcii Návyky.
           </p>
         )}
         <ul className="flex flex-col gap-3">
@@ -180,7 +180,7 @@ export default async function TodayPage() {
                       )}
                       {missedYesterday && (
                         <span className="mt-1 block text-xs text-danger">
-                          Včera vynechané — dnes nezmeškaj druhýkrát.
+                          Včera vynechané - dnes nezmeškaj druhýkrát.
                         </span>
                       )}
                       <span className="mt-2 block">

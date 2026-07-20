@@ -5,7 +5,7 @@ export function todayISO(): string {
   return new Intl.DateTimeFormat("en-CA", { timeZone: TZ }).format(new Date());
 }
 
-/** Aktuálna hodina (0–23) v bratislavskom čase. */
+/** Aktuálna hodina (0-23) v bratislavskom čase. */
 export function currentHour(): number {
   return Number(
     new Intl.DateTimeFormat("en-GB", {

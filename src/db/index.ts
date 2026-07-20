@@ -8,7 +8,6 @@ import * as schema from "./schema";
 export type Db = PgliteDatabase<typeof schema>;
 
 declare global {
-  // eslint-disable-next-line no-var
   var __lifeosDb: Db | undefined;
 }
 
@@ -27,7 +26,7 @@ function getDb(): Db {
   return (globalThis.__lifeosDb ??= createDb());
 }
 
-// Lenivá inicializácia — pripojenie vzniká až pri prvom dopyte,
+// Lenivá inicializácia - pripojenie vzniká až pri prvom dopyte,
 // nie pri importe (ten beží aj počas `next build`).
 export const db: Db = new Proxy({} as Db, {
   get(_target, prop) {

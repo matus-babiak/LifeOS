@@ -12,7 +12,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   providers: [GitHub],
   pages: { signIn: "/login" },
   callbacks: {
-    // Jediný povolený používateľ — GitHub účet vlastníka
+    // Jediný povolený používateľ - GitHub účet vlastníka
     signIn({ profile }) {
       const allowed = process.env.ALLOWED_GITHUB_LOGIN;
       const login = (profile as { login?: string } | null)?.login;

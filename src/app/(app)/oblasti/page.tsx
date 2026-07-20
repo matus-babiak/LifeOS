@@ -30,7 +30,7 @@ export default async function AreasPage() {
           Oblasti života
         </h1>
         <p className="mt-1 text-sm text-muted">
-          Mapa celku — tréningy si vyberáš vždy len z 1 až 3 oblastí naraz.
+          Mapa celku - tréningy si vyberáš vždy len z 1 až 3 oblastí naraz.
         </p>
       </header>
 

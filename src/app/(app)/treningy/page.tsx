@@ -6,7 +6,7 @@ export default function TrainingsPage() {
   return (
     <ComingSoon
       title="Tréningy"
-      description="1 až 3 aktívne tréningy s úrovňami 1–5, míľnikmi a denným krokom."
+      description="1 až 3 aktívne tréningy s úrovňami 1-5, míľnikmi a denným krokom."
       stage="etape 2"
     />
   );

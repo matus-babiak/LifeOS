@@ -101,7 +101,7 @@ export default function NewHabitForm() {
 
         <div>
           <span className="mb-2 block text-sm text-muted">
-            Fáza budovania — koľko dní na vybudovanie?
+            Fáza budovania - koľko dní na vybudovanie?
           </span>
           <div className="flex flex-wrap gap-2">
             {[

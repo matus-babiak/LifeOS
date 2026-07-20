@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth, authDisabled } from "@/auth";
 
-// Optimistická ochrana rout — plná kontrola session je v server actions a stránkach.
+// Optimistická ochrana rout - plná kontrola session je v server actions a stránkach.
 export const proxy = auth((req) => {
   if (authDisabled) return NextResponse.next();
   const { pathname } = req.nextUrl;

@@ -1,6 +1,6 @@
 import AppShell, { SignOutButton } from "@/components/AppShell";
 
-// Všetko pod (app) je osobný, per-request obsah — nikdy sa nesmie prerendrovať staticky
+// Všetko pod (app) je osobný, per-request obsah - nikdy sa nesmie prerendrovať staticky
 export const dynamic = "force-dynamic";
 import { authDisabled, signOut } from "@/auth";
 import { requireUser } from "@/lib/session";

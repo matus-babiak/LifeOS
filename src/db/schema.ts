@@ -29,7 +29,7 @@ export const trainingStatus = pgEnum("training_status", [
   "completed",
 ]);
 
-// 6 oblastí života — seedujú sa pri prvom spustení
+// 6 oblastí života - seedujú sa pri prvom spustení
 export const areas = pgTable("areas", {
   id: serial("id").primaryKey(),
   slug: text("slug").notNull().unique(),
@@ -40,7 +40,7 @@ export const areas = pgTable("areas", {
   position: integer("position").notNull().default(0),
 });
 
-// Fáza života — 12-týždňová sezóna s retrospektívou na konci
+// Fáza života - 12-týždňová sezóna s retrospektívou na konci
 export const seasons = pgTable("seasons", {
   id: serial("id").primaryKey(),
   title: text("title").notNull(),
@@ -51,7 +51,7 @@ export const seasons = pgTable("seasons", {
   active: boolean("active").notNull().default(true),
 });
 
-// Tréning — 1 až 3 aktívne naraz, úroveň 1–5 s míľnikmi
+// Tréning - 1 až 3 aktívne naraz, úroveň 1-5 s míľnikmi
 export const trainings = pgTable("trainings", {
   id: serial("id").primaryKey(),
   areaId: integer("area_id")
@@ -80,7 +80,7 @@ export const milestones = pgTable("milestones", {
   position: integer("position").notNull().default(0),
 });
 
-// Návyk — fáza budovania (21/66/vlastné dni), vynechanie NEresetuje progres
+// Návyk - fáza budovania (21/66/vlastné dni), vynechanie NEresetuje progres
 export const habits = pgTable("habits", {
   id: serial("id").primaryKey(),
   trainingId: integer("training_id").references(() => trainings.id, {
@@ -109,7 +109,7 @@ export const habitLogs = pgTable(
   (t) => [uniqueIndex("habit_logs_habit_date").on(t.habitId, t.date)],
 );
 
-// Denný check-in — ranné a večerné polia v jednom zázname na deň
+// Denný check-in - ranné a večerné polia v jednom zázname na deň
 export const dailyCheckins = pgTable("daily_checkins", {
   id: serial("id").primaryKey(),
   date: date("date").notNull().unique(),
@@ -122,7 +122,7 @@ export const dailyCheckins = pgTable("daily_checkins", {
   eveningDoneAt: timestamp("evening_done_at", { withTimezone: true }),
 });
 
-// Denný fokus — max 3 položky na deň (vynucuje server action)
+// Denný fokus - max 3 položky na deň (vynucuje server action)
 export const focusItems = pgTable("focus_items", {
   id: serial("id").primaryKey(),
   date: date("date").notNull(),
@@ -131,7 +131,7 @@ export const focusItems = pgTable("focus_items", {
   position: integer("position").notNull().default(0),
 });
 
-// Reflexný denník — Situácia → Reakcia → Pocit → Čo to ukazuje → Lekcia → Princíp
+// Reflexný denník - Situácia → Reakcia → Pocit → Čo to ukazuje → Lekcia → Princíp
 export const journalEntries = pgTable("journal_entries", {
   id: serial("id").primaryKey(),
   trainingId: integer("training_id").references(() => trainings.id, {
@@ -148,7 +148,7 @@ export const journalEntries = pgTable("journal_entries", {
     .defaultNow(),
 });
 
-// Týždenná reflexia — auto-súhrn + 3 odpovede (víťazstvo / vzorec / zmena)
+// Týždenná reflexia - auto-súhrn + 3 odpovede (víťazstvo / vzorec / zmena)
 export const weeklyReviews = pgTable("weekly_reviews", {
   id: serial("id").primaryKey(),
   weekStart: date("week_start").notNull().unique(),
@@ -159,7 +159,7 @@ export const weeklyReviews = pgTable("weekly_reviews", {
   doneAt: timestamp("done_at", { withTimezone: true }),
 });
 
-// Vízia — "o 1 rok" / "o 5 rokov"
+// Vízia - "o 1 rok" / "o 5 rokov"
 export const visions = pgTable("visions", {
   id: serial("id").primaryKey(),
   horizon: text("horizon").notNull().unique(), // "1y" | "5y"

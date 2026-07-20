@@ -67,7 +67,7 @@ export default async function HabitsPage() {
                 <div className="flex items-center justify-between text-xs text-muted">
                   <span>
                     {established
-                      ? `${collected} dní spolu — návyk je súčasťou teba`
+                      ? `${collected} dní spolu - návyk je súčasťou teba`
                       : `budovanie ${Math.min(collected, habit.targetDays)}/${habit.targetDays} dní`}
                   </span>
                   {!established && (
