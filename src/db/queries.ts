@@ -1,4 +1,4 @@
-import { and, asc, count, desc, eq, gte, inArray, lte } from "drizzle-orm";
+import { and, asc, count, desc, eq, gte, inArray, isNotNull, lte } from "drizzle-orm";
 import { db } from "./index";
 import {
   areas,
@@ -8,9 +8,13 @@ import {
   habits,
   journalEntries,
   milestones,
+  seasons,
   trainings,
+  visions,
+  weeklyReviews,
 } from "./schema";
 import { addDays, todayISO } from "@/lib/dates";
+import { weeklyTarget } from "@/lib/habits";
 
 export async function getAreas() {
   return db.select().from(areas).orderBy(asc(areas.position));
@@ -187,4 +191,100 @@ export async function getJournalView() {
     .orderBy(asc(trainings.createdAt));
 
   return { entries, trainingName, trainings: activeTrainings };
+}
+
+export type Season = typeof seasons.$inferSelect;
+
+/** Vízia (o 1 rok / o 5 rokov) a aktuálna sezóna + história pre stránku Vízia. */
+export async function getVisionView() {
+  const rows = await db.select().from(visions);
+  const contentByHorizon = new Map(rows.map((v) => [v.horizon, v.content]));
+
+  const [activeSeason] = await db
+    .select()
+    .from(seasons)
+    .where(eq(seasons.active, true));
+
+  const pastSeasons = await db
+    .select()
+    .from(seasons)
+    .where(eq(seasons.active, false))
+    .orderBy(desc(seasons.endDate));
+
+  return { contentByHorizon, activeSeason: activeSeason ?? null, pastSeasons };
+}
+
+/** Dáta pre jeden týždeň (pondelok-nedeľa): auto-súhrn z denných dát + prípadná uložená reflexia. */
+export async function getWeekView(startISO: string) {
+  const endISO = addDays(startISO, 6);
+
+  const [review] = await db
+    .select()
+    .from(weeklyReviews)
+    .where(eq(weeklyReviews.weekStart, startISO));
+
+  const checkins = await db
+    .select()
+    .from(dailyCheckins)
+    .where(and(gte(dailyCheckins.date, startISO), lte(dailyCheckins.date, endISO)));
+  const energies = checkins
+    .map((c) => c.energy)
+    .filter((e): e is number => e != null);
+  const avgEnergy =
+    energies.length > 0
+      ? Math.round((energies.reduce((a, b) => a + b, 0) / energies.length) * 10) / 10
+      : null;
+
+  const activeHabits = await db
+    .select()
+    .from(habits)
+    .where(inArray(habits.status, ["building", "established"]))
+    .orderBy(asc(habits.createdAt));
+  const habitIds = activeHabits.map((h) => h.id);
+  const logs = habitIds.length
+    ? await db
+        .select()
+        .from(habitLogs)
+        .where(
+          and(
+            inArray(habitLogs.habitId, habitIds),
+            gte(habitLogs.date, startISO),
+            lte(habitLogs.date, endISO),
+          ),
+        )
+    : [];
+  const habitStats = activeHabits.map((h) => ({
+    habit: h,
+    done: logs.filter((l) => l.habitId === h.id).length,
+    target: weeklyTarget(h),
+  }));
+
+  const allEntries = await db
+    .select()
+    .from(journalEntries)
+    .orderBy(desc(journalEntries.createdAt));
+  const weekEntries = allEntries.filter((e) => {
+    const d = e.createdAt.toISOString().slice(0, 10);
+    return d >= startISO && d <= endISO;
+  });
+
+  const steps = await getActiveTrainingSteps();
+
+  const history = await db
+    .select()
+    .from(weeklyReviews)
+    .where(isNotNull(weeklyReviews.doneAt))
+    .orderBy(desc(weeklyReviews.weekStart))
+    .limit(8);
+
+  return {
+    start: startISO,
+    end: endISO,
+    review: review ?? null,
+    avgEnergy,
+    habitStats,
+    weekEntries,
+    steps,
+    history,
+  };
 }
