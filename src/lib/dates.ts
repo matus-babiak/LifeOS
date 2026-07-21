@@ -74,3 +74,9 @@ export function formatHuman(iso: string): string {
   const [, m, d] = iso.split("-").map(Number);
   return `${DAY_NAMES[isoWeekday(iso) - 1]} ${d}. ${MONTH_NAMES_GENITIVE[m - 1]}`;
 }
+
+/** „21.07.2026" - použité v názvoch súborov markdown exportu. */
+export function formatFileDate(iso: string): string {
+  const [y, m, d] = iso.split("-");
+  return `${d}.${m}.${y}`;
+}

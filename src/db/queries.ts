@@ -20,6 +20,35 @@ export async function getAreas() {
   return db.select().from(areas).orderBy(asc(areas.position));
 }
 
+/** Oblasti s ich tréningami (aktívne a pozastavené), pre prehľad na stránke Oblasti. */
+export async function getAreasOverview() {
+  const areaList = await db.select().from(areas).orderBy(asc(areas.position));
+
+  const trainingList = await db
+    .select({
+      id: trainings.id,
+      name: trainings.name,
+      level: trainings.level,
+      status: trainings.status,
+      areaId: trainings.areaId,
+    })
+    .from(trainings)
+    .where(inArray(trainings.status, ["active", "paused"]))
+    .orderBy(asc(trainings.position));
+
+  const byArea = new Map<number, typeof trainingList>();
+  for (const t of trainingList) {
+    const list = byArea.get(t.areaId) ?? [];
+    list.push(t);
+    byArea.set(t.areaId, list);
+  }
+
+  return areaList.map((area) => ({
+    area,
+    trainings: byArea.get(area.id) ?? [],
+  }));
+}
+
 export async function getTodayView() {
   const today = todayISO();
 
@@ -287,4 +316,67 @@ export async function getWeekView(startISO: string) {
     steps,
     history,
   };
+}
+
+export type ExportDay = {
+  date: string;
+  checkin: typeof dailyCheckins.$inferSelect | null;
+  focus: { text: string; done: boolean }[];
+  journalEntries: (typeof journalEntries.$inferSelect & {
+    trainingName: string | null;
+  })[];
+  habitNames: string[];
+};
+
+export type ExportWeek = typeof weeklyReviews.$inferSelect;
+
+/** Všetky dáta pre markdown export (ZIP) vo formáte vaultu. Slúži aj ako záloha. */
+export async function getExportData(): Promise<{
+  days: ExportDay[];
+  weeks: ExportWeek[];
+}> {
+  const checkins = await db.select().from(dailyCheckins);
+  const focus = await db.select().from(focusItems).orderBy(asc(focusItems.position));
+  const entries = await db
+    .select()
+    .from(journalEntries)
+    .orderBy(asc(journalEntries.createdAt));
+  const logs = await db.select().from(habitLogs);
+  const allHabits = await db.select().from(habits);
+  const habitNameById = new Map(allHabits.map((h) => [h.id, h.name]));
+  const trainingRows = await db
+    .select({ id: trainings.id, name: trainings.name })
+    .from(trainings);
+  const trainingNameById = new Map(trainingRows.map((t) => [t.id, t.name]));
+
+  const dates = new Set<string>();
+  checkins.forEach((c) => dates.add(c.date));
+  focus.forEach((f) => dates.add(f.date));
+  logs.forEach((l) => dates.add(l.date));
+  entries.forEach((e) => dates.add(e.createdAt.toISOString().slice(0, 10)));
+
+  const days: ExportDay[] = [...dates].sort().map((date) => ({
+    date,
+    checkin: checkins.find((c) => c.date === date) ?? null,
+    focus: focus
+      .filter((f) => f.date === date)
+      .map((f) => ({ text: f.text, done: f.done })),
+    journalEntries: entries
+      .filter((e) => e.createdAt.toISOString().slice(0, 10) === date)
+      .map((e) => ({
+        ...e,
+        trainingName: e.trainingId ? trainingNameById.get(e.trainingId) ?? null : null,
+      })),
+    habitNames: logs
+      .filter((l) => l.date === date)
+      .map((l) => habitNameById.get(l.habitId))
+      .filter((n): n is string => !!n),
+  }));
+
+  const weeks = await db
+    .select()
+    .from(weeklyReviews)
+    .orderBy(asc(weeklyReviews.weekStart));
+
+  return { days, weeks };
 }
