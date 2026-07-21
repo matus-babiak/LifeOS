@@ -5,7 +5,7 @@ import {
   Sunrise,
 } from "lucide-react";
 import MorningForm from "@/components/MorningForm";
-import { getTodayView } from "@/db/queries";
+import { getActiveTrainingSteps, getTodayView } from "@/db/queries";
 import { formatHuman, isEvening, weekStart } from "@/lib/dates";
 import { addDays } from "@/lib/dates";
 import { frequencyLabel, isDueOn, weeklyTarget } from "@/lib/habits";
@@ -19,6 +19,9 @@ import {
 export default async function TodayPage() {
   const { today, checkin, focus, habits, recentLogs, totals } =
     await getTodayView();
+  const trainingSteps = (await getActiveTrainingSteps())
+    .map((s) => s.dailyStep as string)
+    .slice(0, 3);
   const evening = isEvening();
   const morningDone = !!checkin?.morningDoneAt;
   const eveningDone = !!checkin?.eveningDoneAt;
@@ -37,7 +40,9 @@ export default async function TodayPage() {
       </header>
 
       {/* Ranný check-in / zhrnutie rána */}
-      {!morningDone && !evening && <MorningForm />}
+      {!morningDone && !evening && (
+        <MorningForm defaultFocus={trainingSteps} />
+      )}
 
       {morningDone && (
         <section className="rounded-2xl border border-line bg-surface p-5 shadow-sm">
@@ -293,7 +298,7 @@ export default async function TodayPage() {
       )}
 
       {/* Ranný check-in dostupný aj večer, ak ráno vynechal */}
-      {!morningDone && evening && <MorningForm />}
+      {!morningDone && evening && <MorningForm defaultFocus={trainingSteps} />}
     </div>
   );
 }

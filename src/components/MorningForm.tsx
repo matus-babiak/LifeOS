@@ -7,9 +7,11 @@ import { saveMorning } from "@/app/(app)/actions";
 export default function MorningForm({
   defaultEnergy,
   defaultIdentity,
+  defaultFocus = [],
 }: {
   defaultEnergy?: number | null;
   defaultIdentity?: string | null;
+  defaultFocus?: string[];
 }) {
   const [energy, setEnergy] = useState(defaultEnergy ?? 6);
 
@@ -61,12 +63,18 @@ export default function MorningForm({
           <span className="mb-2 block text-sm text-muted">
             Na čom dnes záleží? (max 3 veci)
           </span>
+          {defaultFocus.length > 0 && (
+            <p className="mb-2 text-xs text-muted">
+              Predvyplnené z denných krokov tvojich tréningov, uprav podľa seba.
+            </p>
+          )}
           <div className="flex flex-col gap-2">
             {[1, 2, 3].map((i) => (
               <input
                 key={i}
                 name={`focus${i}`}
                 type="text"
+                defaultValue={defaultFocus[i - 1] ?? ""}
                 placeholder={i === 1 ? "Najdôležitejší krok dňa" : "Voliteľné"}
                 className="w-full rounded-lg border border-line bg-bg px-3 py-2 text-sm outline-none focus:border-accent"
               />
