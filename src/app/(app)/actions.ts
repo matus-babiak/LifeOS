@@ -197,3 +197,27 @@ export async function archiveHabit(habitId: number) {
   revalidatePath("/");
   revalidatePath("/navyky");
 }
+
+/** Vráti archivovaný návyk späť medzi aktívne, so statusom podľa nazbieraných dní. */
+export async function restoreHabit(habitId: number) {
+  await requireUser();
+  const [habit] = await db.select().from(habits).where(eq(habits.id, habitId));
+  if (!habit) return;
+
+  const [{ total }] = await db
+    .select({ total: count() })
+    .from(habitLogs)
+    .where(eq(habitLogs.habitId, habitId));
+  const status = Number(total) >= habit.targetDays ? "established" : "building";
+
+  await db.update(habits).set({ status }).where(eq(habits.id, habitId));
+  revalidatePath("/");
+  revalidatePath("/navyky");
+}
+
+export async function deleteHabit(habitId: number) {
+  await requireUser();
+  await db.delete(habits).where(eq(habits.id, habitId));
+  revalidatePath("/");
+  revalidatePath("/navyky");
+}

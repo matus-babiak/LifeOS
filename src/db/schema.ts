@@ -159,6 +159,16 @@ export const weeklyReviews = pgTable("weekly_reviews", {
   doneAt: timestamp("done_at", { withTimezone: true }),
 });
 
+// Poznámky - voľné zápisky priradené ku kategórii (6 oblastí + "lifeos" pre nápady na appku)
+export const notes = pgTable("notes", {
+  id: serial("id").primaryKey(),
+  category: text("category").notNull(),
+  content: text("content").notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+});
+
 // Vízia - "o 1 rok" / "o 5 rokov"
 export const visions = pgTable("visions", {
   id: serial("id").primaryKey(),

@@ -1,27 +1,9 @@
 import Link from "next/link";
-import {
-  Brain,
-  Briefcase,
-  Download,
-  Heart,
-  HeartPulse,
-  Pause,
-  Sparkles,
-  Wallet,
-  type LucideIcon,
-} from "lucide-react";
+import { Download, Pause } from "lucide-react";
 import { getAreasOverview } from "@/db/queries";
+import { getAreaIcon } from "@/lib/areaIcons";
 
 export const metadata = { title: "Oblasti" };
-
-const ICONS: Record<string, LucideIcon> = {
-  Brain,
-  HeartPulse,
-  Briefcase,
-  Wallet,
-  Heart,
-  Sparkles,
-};
 
 export default async function AreasPage() {
   const overview = await getAreasOverview();
@@ -39,7 +21,7 @@ export default async function AreasPage() {
 
       <div className="grid gap-3 sm:grid-cols-2">
         {overview.map(({ area, trainings }) => {
-          const Icon = ICONS[area.icon] ?? Sparkles;
+          const Icon = getAreaIcon(area.icon);
           return (
             <article
               key={area.id}

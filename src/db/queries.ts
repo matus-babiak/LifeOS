@@ -8,6 +8,7 @@ import {
   habits,
   journalEntries,
   milestones,
+  notes,
   seasons,
   trainings,
   visions,
@@ -379,4 +380,13 @@ export async function getExportData(): Promise<{
     .orderBy(asc(weeklyReviews.weekStart));
 
   return { days, weeks };
+}
+
+export type Note = typeof notes.$inferSelect;
+
+/** Poznámky od najnovšej + oblasti pre kategórie na stránke Poznámky. */
+export async function getNotesView() {
+  const areaList = await db.select().from(areas).orderBy(asc(areas.position));
+  const noteList = await db.select().from(notes).orderBy(desc(notes.createdAt));
+  return { areas: areaList, notes: noteList };
 }

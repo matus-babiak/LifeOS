@@ -12,6 +12,7 @@ import {
   CalendarRange,
   Compass,
   LayoutGrid,
+  StickyNote,
   Menu,
   X,
   Moon,
@@ -27,6 +28,7 @@ const NAV = [
   { href: "/tyzden", label: "Týždeň", icon: CalendarRange },
   { href: "/vizia", label: "Vízia", icon: Compass },
   { href: "/oblasti", label: "Oblasti", icon: LayoutGrid },
+  { href: "/poznamky", label: "Poznámky", icon: StickyNote },
 ];
 
 function LogoMark() {
