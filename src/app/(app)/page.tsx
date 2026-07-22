@@ -20,10 +20,11 @@ import {
 export default async function TodayPage() {
   const view = await getTodayView();
   const { today, checkin, focus, habits, recentLogs, totals } = view;
-  const mentorMessage = await getMentorMessage(view);
-  const trainingSteps = (await getActiveTrainingSteps())
-    .map((s) => s.dailyStep as string)
-    .slice(0, 3);
+  const allTrainingSteps = (await getActiveTrainingSteps()).map(
+    (s) => s.dailyStep as string,
+  );
+  const mentorMessage = await getMentorMessage(view, allTrainingSteps);
+  const trainingSteps = allTrainingSteps.slice(0, 3);
   const evening = isEvening();
   const morningDone = !!checkin?.morningDoneAt;
   const eveningDone = !!checkin?.eveningDoneAt;

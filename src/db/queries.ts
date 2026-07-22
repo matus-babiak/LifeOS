@@ -114,6 +114,7 @@ export async function getTodayView() {
  */
 export async function getMentorMessage(
   view: Awaited<ReturnType<typeof getTodayView>>,
+  trainingSteps: string[],
 ): Promise<string | null> {
   if (view.checkin?.mentorMessage) return view.checkin.mentorMessage;
 
@@ -134,9 +135,8 @@ export async function getMentorMessage(
   const habitIds = view.habits.map((h) => h.id);
   const twoWeeksAgo = addDays(view.today, -13);
 
-  const [trainingSteps, [activeSeason], [lastWeekReview], twoWeekLogs, journalRows] =
+  const [[activeSeason], [lastWeekReview], twoWeekLogs, journalRows] =
     await Promise.all([
-      getActiveTrainingSteps().then((rows) => rows.map((s) => s.dailyStep as string)),
       db.select().from(seasons).where(eq(seasons.active, true)),
       db
         .select()
