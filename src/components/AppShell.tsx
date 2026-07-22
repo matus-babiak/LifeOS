@@ -13,6 +13,7 @@ import {
   Compass,
   LayoutGrid,
   StickyNote,
+  Brain,
   Menu,
   X,
   Moon,
@@ -29,6 +30,7 @@ const NAV = [
   { href: "/vizia", label: "Vízia", icon: Compass },
   { href: "/oblasti", label: "Oblasti", icon: LayoutGrid },
   { href: "/poznamky", label: "Poznámky", icon: StickyNote },
+  { href: "/presvedcenia", label: "Presvedčenia", icon: Brain },
 ];
 
 function LogoMark() {

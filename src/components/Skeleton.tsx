@@ -42,3 +42,13 @@ export function MentorSkeleton() {
     </section>
   );
 }
+
+/** Menšia kostra pre AI reframe vnorený v položke zoznamu. */
+export function ReframeSkeleton() {
+  return (
+    <div className="mt-3 flex flex-col gap-2 rounded-xl border border-accent/30 bg-accent-soft p-3">
+      <SkeletonLine className="h-3 w-full bg-accent/20" />
+      <SkeletonLine className="h-3 w-4/5 bg-accent/20" />
+    </div>
+  );
+}

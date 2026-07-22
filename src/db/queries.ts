@@ -2,6 +2,7 @@ import { and, asc, count, desc, eq, gte, inArray, isNotNull, lte } from "drizzle
 import { db } from "./index";
 import {
   areas,
+  beliefs,
   dailyCheckins,
   focusItems,
   habitLogs,
@@ -18,6 +19,7 @@ import { addDays, todayISO } from "@/lib/dates";
 import { isDueOn, missedYesterday, weeklyTarget } from "@/lib/habits";
 import { generateText } from "@/lib/gemini";
 import {
+  buildBeliefReframePrompt,
   buildMentorPrompt,
   buildTrainingNotePrompt,
   buildWeekReflectionPrompt,
@@ -549,4 +551,26 @@ export async function getNotesView() {
     db.select().from(notes).orderBy(desc(notes.createdAt)),
   ]);
   return { areas: areaList, notes: noteList };
+}
+
+/** Obmedzujúce presvedčenia - nevyriešené najprv, potom prekonané. */
+export async function getBeliefsView() {
+  return db
+    .select()
+    .from(beliefs)
+    .orderBy(asc(beliefs.resolved), desc(beliefs.createdAt));
+}
+
+/** AI reframe presvedčenia - vygeneruje sa raz a natrvalo sa uloží k presvedčeniu. */
+export async function getBeliefReframe(
+  belief: typeof beliefs.$inferSelect,
+): Promise<string | null> {
+  if (belief.reframe) return belief.reframe;
+
+  const prompt = buildBeliefReframePrompt(belief.text);
+  const reframe = await generateText(prompt);
+  if (!reframe) return null;
+
+  await db.update(beliefs).set({ reframe }).where(eq(beliefs.id, belief.id));
+  return reframe;
 }

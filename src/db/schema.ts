@@ -175,6 +175,17 @@ export const notes = pgTable("notes", {
     .defaultNow(),
 });
 
+// Obmedzujúce presvedčenia - limitujúca myšlienka + AI reframe smerom k rastovému mindsetu
+export const beliefs = pgTable("beliefs", {
+  id: serial("id").primaryKey(),
+  text: text("text").notNull(),
+  reframe: text("reframe"),
+  resolved: boolean("resolved").notNull().default(false),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+});
+
 // Vízia - "o 1 rok" / "o 5 rokov"
 export const visions = pgTable("visions", {
   id: serial("id").primaryKey(),
