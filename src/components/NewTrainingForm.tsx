@@ -66,6 +66,19 @@ export default function NewTrainingForm({
         </div>
 
         <div>
+          <label htmlFor="currentState" className="mb-2 block text-sm text-muted">
+            Aktuálny stav (PRED)
+          </label>
+          <textarea
+            id="currentState"
+            name="currentState"
+            rows={2}
+            placeholder="Napr. Ignorujem dlhy a hoviem si v tejto situácii."
+            className="w-full resize-y rounded-lg border border-line bg-bg px-3 py-2 text-sm outline-none focus:border-accent"
+          />
+        </div>
+
+        <div>
           <label htmlFor="why" className="mb-2 block text-sm text-muted">
             Prečo? (kým sa tým stávam)
           </label>
@@ -80,7 +93,7 @@ export default function NewTrainingForm({
 
         <div>
           <label htmlFor="goal" className="mb-2 block text-sm text-muted">
-            Cieľ
+            Cieľ (PO)
           </label>
           <input
             id="goal"

@@ -7,6 +7,7 @@ import { updateTraining } from "@/app/(app)/treningy/actions";
 type Training = {
   id: number;
   name: string;
+  currentState: string | null;
   why: string | null;
   goal: string | null;
   dailyStep: string | null;
@@ -32,11 +33,15 @@ export default function TrainingEditor({ training }: { training: Training }) {
         </div>
         <dl className="flex flex-col gap-3 text-sm">
           <div>
+            <dt className="text-muted">Aktuálny stav (PRED)</dt>
+            <dd className="mt-0.5">{training.currentState || "-"}</dd>
+          </div>
+          <div>
             <dt className="text-muted">Prečo</dt>
             <dd className="mt-0.5">{training.why || "-"}</dd>
           </div>
           <div>
-            <dt className="text-muted">Cieľ</dt>
+            <dt className="text-muted">Cieľ (PO)</dt>
             <dd className="mt-0.5">{training.goal || "-"}</dd>
           </div>
           <div>
@@ -71,6 +76,19 @@ export default function TrainingEditor({ training }: { training: Training }) {
           />
         </div>
         <div>
+          <label htmlFor="currentState" className="mb-2 block text-sm text-muted">
+            Aktuálny stav (PRED)
+          </label>
+          <textarea
+            id="currentState"
+            name="currentState"
+            rows={2}
+            defaultValue={training.currentState ?? ""}
+            placeholder="Napr. Ignorujem dlhy a hoviem si v tejto situácii."
+            className="w-full resize-y rounded-lg border border-line bg-bg px-3 py-2 text-sm outline-none focus:border-accent"
+          />
+        </div>
+        <div>
           <label htmlFor="why" className="mb-2 block text-sm text-muted">
             Prečo
           </label>
@@ -84,7 +102,7 @@ export default function TrainingEditor({ training }: { training: Training }) {
         </div>
         <div>
           <label htmlFor="goal" className="mb-2 block text-sm text-muted">
-            Cieľ
+            Cieľ (PO)
           </label>
           <input
             id="goal"

@@ -58,6 +58,7 @@ export const trainings = pgTable("trainings", {
     .notNull()
     .references(() => areas.id),
   name: text("name").notNull(),
+  currentState: text("current_state"),
   why: text("why"),
   goal: text("goal"),
   level: integer("level").notNull().default(1),

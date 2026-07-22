@@ -25,6 +25,7 @@ export async function createTraining(formData: FormData) {
     .values({
       name,
       areaId,
+      currentState: text(formData, "currentState"),
       why: text(formData, "why"),
       goal: text(formData, "goal"),
       dailyStep: text(formData, "dailyStep"),
@@ -44,6 +45,7 @@ export async function updateTraining(id: number, formData: FormData) {
     .update(trainings)
     .set({
       name,
+      currentState: text(formData, "currentState"),
       why: text(formData, "why"),
       goal: text(formData, "goal"),
       dailyStep: text(formData, "dailyStep"),
