@@ -121,6 +121,7 @@ export const dailyCheckins = pgTable("daily_checkins", {
   learned: text("learned"),
   improve: text("improve"),
   eveningDoneAt: timestamp("evening_done_at", { withTimezone: true }),
+  mentorMessage: text("mentor_message"),
 });
 
 // Denný fokus - max 3 položky na deň (vynucuje server action)

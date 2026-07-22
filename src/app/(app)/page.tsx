@@ -2,13 +2,14 @@ import {
   Check,
   MoonStar,
   Plus,
+  Sparkles,
   Sunrise,
 } from "lucide-react";
 import MorningForm from "@/components/MorningForm";
-import { getActiveTrainingSteps, getTodayView } from "@/db/queries";
+import { getActiveTrainingSteps, getMentorMessage, getTodayView } from "@/db/queries";
 import { formatHuman, isEvening, weekStart } from "@/lib/dates";
 import { addDays } from "@/lib/dates";
-import { frequencyLabel, isDueOn, weeklyTarget } from "@/lib/habits";
+import { frequencyLabel, isDueOn, missedYesterday, weeklyTarget } from "@/lib/habits";
 import {
   addFocus,
   saveEvening,
@@ -17,8 +18,9 @@ import {
 } from "./actions";
 
 export default async function TodayPage() {
-  const { today, checkin, focus, habits, recentLogs, totals } =
-    await getTodayView();
+  const view = await getTodayView();
+  const { today, checkin, focus, habits, recentLogs, totals } = view;
+  const mentorMessage = await getMentorMessage(view);
   const trainingSteps = (await getActiveTrainingSteps())
     .map((s) => s.dailyStep as string)
     .slice(0, 3);
@@ -38,6 +40,19 @@ export default async function TodayPage() {
           {evening ? "Dobrý večer" : "Dobré ráno"}
         </h1>
       </header>
+
+      {/* Denný mentor */}
+      {mentorMessage && (
+        <section className="rounded-2xl border border-accent/30 bg-accent-soft p-5">
+          <div className="flex items-start gap-2.5">
+            <Sparkles
+              className="mt-0.5 h-4 w-4 shrink-0 text-accent"
+              strokeWidth={1.8}
+            />
+            <p className="text-sm text-accent-ink">{mentorMessage}</p>
+          </div>
+        </section>
+      )}
 
       {/* Ranný check-in / zhrnutie rána */}
       {!morningDone && !evening && (
@@ -135,13 +150,7 @@ export default async function TodayPage() {
             const doneToday = recentLogs.some(
               (l) => l.habitId === habit.id && l.date === today,
             );
-            const missedYesterday =
-              !doneToday &&
-              isDueOn(habit, yesterday) &&
-              !recentLogs.some(
-                (l) => l.habitId === habit.id && l.date === yesterday,
-              ) &&
-              habit.createdAt.toISOString().slice(0, 10) < yesterday;
+            const missedYest = missedYesterday(habit, doneToday, yesterday, recentLogs);
             const collected = totals.get(habit.id) ?? 0;
             const weekCount = recentLogs.filter(
               (l) => l.habitId === habit.id && l.date >= ws && l.date <= today,
@@ -183,7 +192,7 @@ export default async function TodayPage() {
                           +1 hlas: {habit.identity}
                         </span>
                       )}
-                      {missedYesterday && (
+                      {missedYest && (
                         <span className="mt-1 block text-xs text-danger">
                           Včera vynechané - dnes nezmeškaj druhýkrát.
                         </span>

@@ -15,7 +15,9 @@ import {
   weeklyReviews,
 } from "./schema";
 import { addDays, todayISO } from "@/lib/dates";
-import { weeklyTarget } from "@/lib/habits";
+import { isDueOn, missedYesterday, weeklyTarget } from "@/lib/habits";
+import { generateText } from "@/lib/gemini";
+import { buildMentorPrompt } from "@/lib/mentor";
 
 export async function getAreas() {
   return db.select().from(areas).orderBy(asc(areas.position));
@@ -99,6 +101,55 @@ export async function getTodayView() {
     recentLogs,
     totals: new Map(totals.map((t) => [t.habitId, Number(t.total)])),
   };
+}
+
+/**
+ * Denná mentorská správa - vygeneruje sa raz denne cez Gemini a uloží sa do
+ * denného check-inu, ďalšie zobrazenia už len čítajú z DB. Vráti null, ak
+ * chýba API kľúč alebo volanie zlyhá (appka bez toho funguje ďalej).
+ */
+export async function getMentorMessage(
+  view: Awaited<ReturnType<typeof getTodayView>>,
+): Promise<string | null> {
+  if (view.checkin?.mentorMessage) return view.checkin.mentorMessage;
+
+  const yesterday = addDays(view.today, -1);
+  const dueHabits = view.habits
+    .filter((h) => isDueOn(h, view.today))
+    .map((h) => {
+      const doneToday = view.recentLogs.some(
+        (l) => l.habitId === h.id && l.date === view.today,
+      );
+      return {
+        habit: h,
+        doneToday,
+        missedYesterday: missedYesterday(h, doneToday, yesterday, view.recentLogs),
+      };
+    });
+
+  const trainingSteps = (await getActiveTrainingSteps()).map(
+    (s) => s.dailyStep as string,
+  );
+
+  const prompt = buildMentorPrompt({
+    energy: view.checkin?.energy ?? null,
+    identityFocus: view.checkin?.identityFocus ?? null,
+    dueHabits,
+    trainingSteps,
+  });
+
+  const message = await generateText(prompt);
+  if (!message) return null;
+
+  await db
+    .insert(dailyCheckins)
+    .values({ date: view.today, mentorMessage: message })
+    .onConflictDoUpdate({
+      target: dailyCheckins.date,
+      set: { mentorMessage: message },
+    });
+
+  return message;
 }
 
 export async function getHabitsView() {

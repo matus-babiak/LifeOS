@@ -27,6 +27,21 @@ export function weeklyTarget(habit: Habit): number {
   }
 }
 
+/** Bol návyk vynechaný aj včera? (na zvýraznenie druhého vynechania po sebe) */
+export function missedYesterday(
+  habit: Habit,
+  doneToday: boolean,
+  yesterday: string,
+  logs: { habitId: number; date: string }[],
+): boolean {
+  return (
+    !doneToday &&
+    isDueOn(habit, yesterday) &&
+    !logs.some((l) => l.habitId === habit.id && l.date === yesterday) &&
+    habit.createdAt.toISOString().slice(0, 10) < yesterday
+  );
+}
+
 export function frequencyLabel(habit: Habit): string {
   switch (habit.frequency) {
     case "daily":
