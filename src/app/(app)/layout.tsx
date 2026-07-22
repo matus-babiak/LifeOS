@@ -13,8 +13,7 @@ export default async function AppLayout({
 }: {
   children: React.ReactNode;
 }) {
-  await requireUser();
-  await ensureSeeded();
+  await Promise.all([requireUser(), ensureSeeded()]);
 
   const signOutSlot = authDisabled ? null : (
     <form
