@@ -17,7 +17,11 @@ import {
 import { addDays, todayISO } from "@/lib/dates";
 import { isDueOn, missedYesterday, weeklyTarget } from "@/lib/habits";
 import { generateText } from "@/lib/gemini";
-import { buildMentorPrompt } from "@/lib/mentor";
+import {
+  buildMentorPrompt,
+  buildTrainingNotePrompt,
+  buildWeekReflectionPrompt,
+} from "@/lib/mentor";
 
 export async function getAreas() {
   return db.select().from(areas).orderBy(asc(areas.position));
@@ -127,15 +131,51 @@ export async function getMentorMessage(
       };
     });
 
-  const trainingSteps = (await getActiveTrainingSteps()).map(
-    (s) => s.dailyStep as string,
-  );
+  const habitIds = view.habits.map((h) => h.id);
+  const twoWeeksAgo = addDays(view.today, -13);
+
+  const [trainingSteps, [activeSeason], [lastWeekReview], twoWeekLogs, journalRows] =
+    await Promise.all([
+      getActiveTrainingSteps().then((rows) => rows.map((s) => s.dailyStep as string)),
+      db.select().from(seasons).where(eq(seasons.active, true)),
+      db
+        .select()
+        .from(weeklyReviews)
+        .where(isNotNull(weeklyReviews.doneAt))
+        .orderBy(desc(weeklyReviews.weekStart))
+        .limit(1),
+      habitIds.length
+        ? db
+            .select()
+            .from(habitLogs)
+            .where(
+              and(
+                inArray(habitLogs.habitId, habitIds),
+                gte(habitLogs.date, twoWeeksAgo),
+                lte(habitLogs.date, view.today),
+              ),
+            )
+        : Promise.resolve([]),
+      db.select().from(journalEntries).orderBy(desc(journalEntries.createdAt)).limit(2),
+    ]);
+
+  const habitConsistency = view.habits.map((h) => ({
+    name: h.name,
+    done: twoWeekLogs.filter((l) => l.habitId === h.id).length,
+    days: 14,
+  }));
 
   const prompt = buildMentorPrompt({
     energy: view.checkin?.energy ?? null,
     identityFocus: view.checkin?.identityFocus ?? null,
     dueHabits,
     trainingSteps,
+    season: activeSeason ? { title: activeSeason.title, intention: activeSeason.intention } : null,
+    lastWeekReview: lastWeekReview
+      ? { win: lastWeekReview.win, pattern: lastWeekReview.pattern, change: lastWeekReview.change }
+      : null,
+    habitConsistency,
+    recentJournal: journalRows.map((j) => ({ situation: j.situation, principle: j.principle })),
   });
 
   const message = await generateText(prompt);
@@ -150,6 +190,90 @@ export async function getMentorMessage(
     });
 
   return message;
+}
+
+/** AI reflexia týždňa - kratší interpretačný komentár popri pravidlovom auto-súhrne. Cache na deň. */
+export async function getWeekAiReflection(
+  view: Awaited<ReturnType<typeof getWeekView>>,
+): Promise<string | null> {
+  const today = todayISO();
+  if (view.review?.aiReflection && view.review.aiReflectionDate === today) {
+    return view.review.aiReflection;
+  }
+
+  const [previous] = await db
+    .select()
+    .from(weeklyReviews)
+    .where(isNotNull(weeklyReviews.doneAt))
+    .orderBy(desc(weeklyReviews.weekStart))
+    .limit(1);
+
+  const prompt = buildWeekReflectionPrompt({
+    start: view.start,
+    end: view.end,
+    avgEnergy: view.avgEnergy,
+    habitStats: view.habitStats.map((s) => ({
+      name: s.habit.name,
+      done: s.done,
+      target: s.target,
+    })),
+    journalCount: view.weekEntries.length,
+    previousWin: previous?.win ?? null,
+    previousPattern: previous?.pattern ?? null,
+    previousChange: previous?.change ?? null,
+  });
+
+  const reflection = await generateText(prompt);
+  if (!reflection) return null;
+
+  await db
+    .insert(weeklyReviews)
+    .values({ weekStart: view.start, aiReflection: reflection, aiReflectionDate: today })
+    .onConflictDoUpdate({
+      target: weeklyReviews.weekStart,
+      set: { aiReflection: reflection, aiReflectionDate: today },
+    });
+
+  return reflection;
+}
+
+/** Krátky mentorský komentár k tréningu na jeho detaile. Cache na deň. */
+export async function getTrainingMentorNote(
+  detail: NonNullable<Awaited<ReturnType<typeof getTrainingDetail>>>,
+): Promise<string | null> {
+  const today = todayISO();
+  if (detail.training.mentorNote && detail.training.mentorNoteDate === today) {
+    return detail.training.mentorNote;
+  }
+
+  const currentMs = detail.milestones.filter((m) => m.level === detail.training.level);
+  const relatedJournal = await db
+    .select()
+    .from(journalEntries)
+    .where(eq(journalEntries.trainingId, detail.training.id))
+    .orderBy(desc(journalEntries.createdAt))
+    .limit(2);
+
+  const prompt = buildTrainingNotePrompt({
+    name: detail.training.name,
+    level: detail.training.level,
+    currentState: detail.training.currentState,
+    why: detail.training.why,
+    goal: detail.training.goal,
+    milestonesDone: currentMs.filter((m) => m.done).length,
+    milestonesTotal: currentMs.length,
+    recentJournal: relatedJournal.map((j) => ({ situation: j.situation, principle: j.principle })),
+  });
+
+  const note = await generateText(prompt);
+  if (!note) return null;
+
+  await db
+    .update(trainings)
+    .set({ mentorNote: note, mentorNoteDate: today })
+    .where(eq(trainings.id, detail.training.id));
+
+  return note;
 }
 
 export async function getHabitsView() {

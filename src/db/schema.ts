@@ -68,6 +68,8 @@ export const trainings = pgTable("trainings", {
   createdAt: timestamp("created_at", { withTimezone: true })
     .notNull()
     .defaultNow(),
+  mentorNote: text("mentor_note"),
+  mentorNoteDate: date("mentor_note_date"),
 });
 
 export const milestones = pgTable("milestones", {
@@ -159,6 +161,8 @@ export const weeklyReviews = pgTable("weekly_reviews", {
   pattern: text("pattern"),
   change: text("change"),
   doneAt: timestamp("done_at", { withTimezone: true }),
+  aiReflection: text("ai_reflection"),
+  aiReflectionDate: date("ai_reflection_date"),
 });
 
 // Poznámky - voľné zápisky priradené ku kategórii (6 oblastí + "lifeos" pre nápady na appku)

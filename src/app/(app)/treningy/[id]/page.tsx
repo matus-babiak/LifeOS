@@ -8,11 +8,12 @@ import {
   Pause,
   Play,
   Plus,
+  Sparkles,
   Trash2,
   X,
 } from "lucide-react";
 import TrainingEditor from "@/components/TrainingEditor";
-import { getTrainingDetail } from "@/db/queries";
+import { getTrainingDetail, getTrainingMentorNote } from "@/db/queries";
 import {
   addMilestone,
   deleteMilestone,
@@ -47,6 +48,7 @@ export default async function TrainingDetailPage({
   const allCurrentDone =
     currentMs.length > 0 && currentMs.every((m) => m.done);
   const canLevelUp = allCurrentDone && training.level < 5;
+  const mentorNote = await getTrainingMentorNote(detail);
 
   return (
     <div className="flex flex-col gap-6">
@@ -90,6 +92,16 @@ export default async function TrainingDetailPage({
           </div>
         </div>
       </header>
+
+      {/* Mentorský komentár k tréningu */}
+      {mentorNote && (
+        <section className="rounded-2xl border border-accent/30 bg-accent-soft p-5">
+          <div className="flex items-start gap-2.5">
+            <Sparkles className="mt-0.5 h-4 w-4 shrink-0 text-accent" strokeWidth={1.8} />
+            <p className="text-sm text-accent-ink">{mentorNote}</p>
+          </div>
+        </section>
+      )}
 
       {/* Úroveň a míľniky */}
       <section className="rounded-2xl border border-line bg-surface p-5 shadow-sm">
