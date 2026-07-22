@@ -1,21 +1,19 @@
+import { Suspense } from "react";
 import {
-  Check,
   MoonStar,
   Plus,
-  Sparkles,
   Sunrise,
 } from "lucide-react";
+import DailyMentor from "@/components/DailyMentor";
+import FocusCheckbox from "@/components/FocusCheckbox";
+import HabitCheckbox from "@/components/HabitCheckbox";
 import MorningForm from "@/components/MorningForm";
-import { getActiveTrainingSteps, getMentorMessage, getTodayView } from "@/db/queries";
+import { MentorSkeleton } from "@/components/Skeleton";
+import { getActiveTrainingSteps, getTodayView } from "@/db/queries";
 import { formatHuman, isEvening, weekStart } from "@/lib/dates";
 import { addDays } from "@/lib/dates";
-import { frequencyLabel, isDueOn, missedYesterday, weeklyTarget } from "@/lib/habits";
-import {
-  addFocus,
-  saveEvening,
-  toggleFocus,
-  toggleHabit,
-} from "./actions";
+import { isDueOn, missedYesterday } from "@/lib/habits";
+import { addFocus, saveEvening } from "./actions";
 
 export default async function TodayPage() {
   const view = await getTodayView();
@@ -23,7 +21,6 @@ export default async function TodayPage() {
   const allTrainingSteps = (await getActiveTrainingSteps()).map(
     (s) => s.dailyStep as string,
   );
-  const mentorMessage = await getMentorMessage(view, allTrainingSteps);
   const trainingSteps = allTrainingSteps.slice(0, 3);
   const evening = isEvening();
   const morningDone = !!checkin?.morningDoneAt;
@@ -43,17 +40,9 @@ export default async function TodayPage() {
       </header>
 
       {/* Denný mentor */}
-      {mentorMessage && (
-        <section className="rounded-2xl border border-accent/30 bg-accent-soft p-5">
-          <div className="flex items-start gap-2.5">
-            <Sparkles
-              className="mt-0.5 h-4 w-4 shrink-0 text-accent"
-              strokeWidth={1.8}
-            />
-            <p className="text-sm text-accent-ink">{mentorMessage}</p>
-          </div>
-        </section>
-      )}
+      <Suspense fallback={<MentorSkeleton />}>
+        <DailyMentor view={view} trainingSteps={allTrainingSteps} />
+      </Suspense>
 
       {/* Ranný check-in / zhrnutie rána */}
       {!morningDone && !evening && (
@@ -94,27 +83,7 @@ export default async function TodayPage() {
           <ul className="flex flex-col gap-2">
             {focus.map((item) => (
               <li key={item.id}>
-                <form action={toggleFocus.bind(null, item.id)}>
-                  <button
-                    type="submit"
-                    className="flex w-full items-center gap-3 rounded-lg px-2 py-1.5 text-left transition-colors hover:bg-bg"
-                  >
-                    <span
-                      className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full border transition-colors ${
-                        item.done
-                          ? "border-accent bg-accent text-white dark:text-[#10141a]"
-                          : "border-line"
-                      }`}
-                    >
-                      {item.done && <Check className="h-3 w-3" strokeWidth={3} />}
-                    </span>
-                    <span
-                      className={`text-sm ${item.done ? "text-muted line-through" : ""}`}
-                    >
-                      {item.text}
-                    </span>
-                  </button>
-                </form>
+                <FocusCheckbox id={item.id} text={item.text} done={item.done} />
               </li>
             ))}
           </ul>
@@ -160,69 +129,14 @@ export default async function TodayPage() {
 
             return (
               <li key={habit.id}>
-                <form action={toggleHabit.bind(null, habit.id)}>
-                  <button
-                    type="submit"
-                    className="flex w-full items-start gap-3 rounded-xl border border-line px-3 py-3 text-left transition-colors hover:border-accent/60"
-                  >
-                    <span
-                      className={`mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full border transition-colors ${
-                        doneToday
-                          ? "border-accent bg-accent text-white dark:text-[#10141a]"
-                          : "border-line"
-                      }`}
-                    >
-                      {doneToday && (
-                        <Check className="h-3.5 w-3.5" strokeWidth={3} />
-                      )}
-                    </span>
-                    <span className="min-w-0 flex-1">
-                      <span className="flex flex-wrap items-baseline gap-x-2">
-                        <span className="text-sm font-medium">{habit.name}</span>
-                        <span className="text-xs text-muted">
-                          {frequencyLabel(habit)}
-                        </span>
-                        {established && (
-                          <span className="rounded-full bg-accent-soft px-2 py-0.5 text-xs text-accent-ink">
-                            zabehnutý
-                          </span>
-                        )}
-                      </span>
-                      {doneToday && habit.identity && (
-                        <span className="mt-1 block text-xs text-accent-ink">
-                          +1 hlas: {habit.identity}
-                        </span>
-                      )}
-                      {missedYest && (
-                        <span className="mt-1 block text-xs text-danger">
-                          Včera vynechané - dnes nezmeškaj druhýkrát.
-                        </span>
-                      )}
-                      <span className="mt-2 block">
-                        <span className="flex items-center justify-between text-xs text-muted">
-                          <span>
-                            {established
-                              ? `${collected} dní spolu`
-                              : `budovanie ${Math.min(collected, habit.targetDays)}/${habit.targetDays} dní`}
-                          </span>
-                          <span>
-                            tento týždeň {weekCount}/{weeklyTarget(habit)}
-                          </span>
-                        </span>
-                        {!established && (
-                          <span className="mt-1 block h-1 overflow-hidden rounded-full bg-line">
-                            <span
-                              className="block h-full rounded-full bg-accent"
-                              style={{
-                                width: `${Math.min(100, Math.round((collected / habit.targetDays) * 100))}%`,
-                              }}
-                            />
-                          </span>
-                        )}
-                      </span>
-                    </span>
-                  </button>
-                </form>
+                <HabitCheckbox
+                  habit={habit}
+                  doneToday={doneToday}
+                  missedYesterday={missedYest}
+                  established={established}
+                  collected={collected}
+                  weekCount={weekCount}
+                />
               </li>
             );
           })}

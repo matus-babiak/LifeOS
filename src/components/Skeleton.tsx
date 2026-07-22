@@ -29,3 +29,16 @@ export function SkeletonHeader({ withSubtitle = true }: { withSubtitle?: boolean
     </header>
   );
 }
+
+/** Kostra pre miesto, kde sa dopisuje AI mentor (streamované cez Suspense). */
+export function MentorSkeleton() {
+  return (
+    <section className="rounded-2xl border border-accent/30 bg-accent-soft p-5">
+      <div className="flex flex-col gap-2">
+        <SkeletonLine className="h-3.5 w-full bg-accent/20" />
+        <SkeletonLine className="h-3.5 w-5/6 bg-accent/20" />
+        <SkeletonLine className="h-3.5 w-2/3 bg-accent/20" />
+      </div>
+    </section>
+  );
+}

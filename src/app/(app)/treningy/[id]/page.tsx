@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { Suspense } from "react";
 import {
   ArrowLeft,
   ArrowUp,
@@ -8,19 +9,20 @@ import {
   Pause,
   Play,
   Plus,
-  Sparkles,
   Trash2,
   X,
 } from "lucide-react";
+import MilestoneCheckbox from "@/components/MilestoneCheckbox";
+import { MentorSkeleton } from "@/components/Skeleton";
 import TrainingEditor from "@/components/TrainingEditor";
-import { getTrainingDetail, getTrainingMentorNote } from "@/db/queries";
+import TrainingMentorNote from "@/components/TrainingMentorNote";
+import { getTrainingDetail } from "@/db/queries";
 import {
   addMilestone,
   deleteMilestone,
   deleteTraining,
   levelUp,
   setTrainingStatus,
-  toggleMilestone,
 } from "../actions";
 
 export async function generateMetadata({
@@ -48,7 +50,6 @@ export default async function TrainingDetailPage({
   const allCurrentDone =
     currentMs.length > 0 && currentMs.every((m) => m.done);
   const canLevelUp = allCurrentDone && training.level < 5;
-  const mentorNote = await getTrainingMentorNote(detail);
 
   return (
     <div className="flex flex-col gap-6">
@@ -94,14 +95,9 @@ export default async function TrainingDetailPage({
       </header>
 
       {/* Mentorský komentár k tréningu */}
-      {mentorNote && (
-        <section className="rounded-2xl border border-accent/30 bg-accent-soft p-5">
-          <div className="flex items-start gap-2.5">
-            <Sparkles className="mt-0.5 h-4 w-4 shrink-0 text-accent" strokeWidth={1.8} />
-            <p className="text-sm text-accent-ink">{mentorNote}</p>
-          </div>
-        </section>
-      )}
+      <Suspense fallback={<MentorSkeleton />}>
+        <TrainingMentorNote detail={detail} />
+      </Suspense>
 
       {/* Úroveň a míľniky */}
       <section className="rounded-2xl border border-line bg-surface p-5 shadow-sm">
@@ -114,30 +110,14 @@ export default async function TrainingDetailPage({
         <ul className="flex flex-col gap-1">
           {currentMs.map((m) => (
             <li key={m.id} className="flex items-center gap-2">
-              <form
-                action={toggleMilestone.bind(null, m.id, training.id)}
-                className="flex min-w-0 flex-1"
-              >
-                <button
-                  type="submit"
-                  className="flex w-full items-center gap-3 rounded-lg px-2 py-1.5 text-left transition-colors hover:bg-bg"
-                >
-                  <span
-                    className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full border transition-colors ${
-                      m.done
-                        ? "border-accent bg-accent text-white dark:text-[#10141a]"
-                        : "border-line"
-                    }`}
-                  >
-                    {m.done && <Check className="h-3 w-3" strokeWidth={3} />}
-                  </span>
-                  <span
-                    className={`text-sm ${m.done ? "text-muted line-through" : ""}`}
-                  >
-                    {m.text}
-                  </span>
-                </button>
-              </form>
+              <div className="flex min-w-0 flex-1">
+                <MilestoneCheckbox
+                  id={m.id}
+                  trainingId={training.id}
+                  text={m.text}
+                  done={m.done}
+                />
+              </div>
               <form action={deleteMilestone.bind(null, m.id, training.id)}>
                 <button
                   type="submit"

@@ -1,7 +1,10 @@
 import Link from "next/link";
+import { Suspense } from "react";
 import { ChevronLeft, ChevronRight, Sparkles } from "lucide-react";
+import { MentorSkeleton } from "@/components/Skeleton";
 import WeeklyReviewForm from "@/components/WeeklyReviewForm";
-import { getWeekAiReflection, getWeekView } from "@/db/queries";
+import WeekReflection from "@/components/WeekReflection";
+import { getWeekView } from "@/db/queries";
 import { addDays, formatHuman, todayISO, weekStart as mondayOf } from "@/lib/dates";
 import { reopenWeeklyReview } from "./actions";
 
@@ -27,7 +30,6 @@ export default async function WeekPage({
   const nextStart = addDays(start, 7);
   const isCurrentWeek = start === currentWeekStart;
   const isFutureWeek = start > currentWeekStart;
-  const aiReflection = isFutureWeek ? null : await getWeekAiReflection(weekView);
 
   return (
     <div className="flex flex-col gap-6">
@@ -113,10 +115,10 @@ export default async function WeekPage({
       </section>
 
       {/* AI reflexia - interpretácia dát, nielen ich zopakovanie */}
-      {aiReflection && (
-        <section className="rounded-2xl border border-accent/30 bg-accent-soft p-5">
-          <p className="text-sm text-accent-ink">{aiReflection}</p>
-        </section>
+      {!isFutureWeek && (
+        <Suspense fallback={<MentorSkeleton />}>
+          <WeekReflection weekView={weekView} />
+        </Suspense>
       )}
 
       {/* 3 otázky */}
