@@ -6,6 +6,8 @@ Osobný operačný systém pre rast, sebarealizáciu a vedomé budovanie života
 
 Produktové rozhodnutia a plán etáp: [PRODUCT.md](PRODUCT.md)
 
+AI mentor (Gemini): nastavenie, prepojenie a funkcie: [AI.md](AI.md)
+
 ## Lokálny vývoj
 
 ```bash
@@ -31,6 +33,7 @@ a bez `DATABASE_URL` sa použije vstavaná PGlite databáza.
    - `AUTH_GITHUB_SECRET` - Client Secret z OAuth App
    - `AUTH_SECRET` - vygeneruj: `openssl rand -base64 32`
    - `ALLOWED_GITHUB_LOGIN` - `matus-babiak` (jediný účet, ktorý smie dnu)
+   - `GEMINI_API_KEY` - kľúč z Google AI Studio (voliteľné; bez neho AI bloky zmiznú)
 5. **Tabuľky v produkčnej DB** - lokálne spusti:
    ```bash
    DATABASE_URL="<connection string z Vercel/Neon>" npm run db:push

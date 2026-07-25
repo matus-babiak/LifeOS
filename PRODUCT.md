@@ -57,5 +57,6 @@ Pôvodné koncepty „Projekt" a „Skill tree" boli zámerne rozpustené do Tr�
 | 3 | Týždenná reflexia (auto-súhrn) + sezóna + vízia - hotovo |
 | 4 | Markdown export + prehľad oblastí - hotovo, ladenie priebežne podľa reálneho používania |
 
-Odsunuté za MVP: AI mentor (dátový model je naň pripravený), priama synchronizácia s Obsidian vaultom.
+AI mentor je v produkcii (denný mentor, týždenná reflexia, poznámka k tréningu, reframe presvedčení). Popis prepojenia: [AI.md](AI.md).
+Odsunuté za MVP: priama synchronizácia s Obsidian vaultom.
 Štartovacie dáta: predvyplnených 6 oblastí + tréningy Predaj, Zdravie (10 000 krokov), Trpezlivosť.
