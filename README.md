@@ -31,10 +31,9 @@ a bez `DATABASE_URL` sa použije vstavaná PGlite databáza.
    - `AUTH_GITHUB_SECRET` - Client Secret z OAuth App
    - `AUTH_SECRET` - vygeneruj: `openssl rand -base64 32`
    - `ALLOWED_GITHUB_LOGIN` - `matus-babiak` (jediný účet, ktorý smie dnu)
-5. **Tabuľky v produkčnej DB** - lokálne spusti:
-   ```bash
-   DATABASE_URL="<connection string z Vercel/Neon>" npm run db:push
-   ```
+5. **Tabuľky v produkčnej DB** - `npm run build` na Verceli si pred `next build`
+   automaticky spustí `drizzle-kit push --force`, takže schéma sa pri každom
+   nasadení sama zosynchronizuje s `DATABASE_URL`. Ručný krok netreba.
 6. Redeploy. Hotovo - appka je súkromná, pustí len tvoj GitHub účet.
 
 ## Ikona na ploche (iPhone)
