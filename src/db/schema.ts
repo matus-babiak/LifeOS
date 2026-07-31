@@ -186,6 +186,15 @@ export const beliefs = pgTable("beliefs", {
     .defaultNow(),
 });
 
+// Myšlienky - úplne voľné rýchle zápisky bez kategórie
+export const thoughts = pgTable("thoughts", {
+  id: serial("id").primaryKey(),
+  content: text("content").notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+});
+
 // Vízia - "o 1 rok" / "o 5 rokov"
 export const visions = pgTable("visions", {
   id: serial("id").primaryKey(),

@@ -11,6 +11,7 @@ import {
   milestones,
   notes,
   seasons,
+  thoughts,
   trainings,
   visions,
   weeklyReviews,
@@ -551,6 +552,11 @@ export async function getNotesView() {
     db.select().from(notes).orderBy(desc(notes.createdAt)),
   ]);
   return { areas: areaList, notes: noteList };
+}
+
+/** Myšlienky - najnovšie najprv. */
+export async function getThoughts() {
+  return db.select().from(thoughts).orderBy(desc(thoughts.createdAt));
 }
 
 /** Obmedzujúce presvedčenia - nevyriešené najprv, potom prekonané. */

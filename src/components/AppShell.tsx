@@ -13,6 +13,7 @@ import {
   Compass,
   LayoutGrid,
   StickyNote,
+  Sparkles,
   Brain,
   Menu,
   X,
@@ -30,6 +31,7 @@ const NAV = [
   { href: "/vizia", label: "Vízia", icon: Compass },
   { href: "/oblasti", label: "Oblasti", icon: LayoutGrid },
   { href: "/poznamky", label: "Poznámky", icon: StickyNote },
+  { href: "/myslienky", label: "Myšlienky", icon: Sparkles },
   { href: "/presvedcenia", label: "Presvedčenia", icon: Brain },
 ];
 
