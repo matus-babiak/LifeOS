@@ -54,3 +54,12 @@ body {
 ::selection {
   background: var(--accent-soft);
 }
+
+/* iOS Safari zoomuje stránku, keď má fokusnuté pole font-size pod 16px */
+@media (max-width: 767px) {
+  input,
+  textarea,
+  select {
+    font-size: 16px !important;
+  }
+}
