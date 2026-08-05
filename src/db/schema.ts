@@ -152,6 +152,21 @@ export const journalEntries = pgTable("journal_entries", {
     .defaultNow(),
 });
 
+// Tolerancie - drobnosti, ktoré denne odčerpávajú energiu.
+// Zápis (text) a triedenie (areaId, energy) sú zámerne oddelené kroky.
+export const tolerances = pgTable("tolerances", {
+  id: serial("id").primaryKey(),
+  areaId: integer("area_id").references(() => areas.id),
+  text: text("text").notNull(),
+  energy: integer("energy"), // 1-10, null kým netriedené
+  firstStep: text("first_step"),
+  dueDate: date("due_date"),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+  doneAt: timestamp("done_at", { withTimezone: true }),
+});
+
 // Týždenná reflexia - auto-súhrn + 3 odpovede (víťazstvo / vzorec / zmena)
 export const weeklyReviews = pgTable("weekly_reviews", {
   id: serial("id").primaryKey(),
@@ -207,6 +222,11 @@ export const visions = pgTable("visions", {
 
 export const areasRelations = relations(areas, ({ many }) => ({
   trainings: many(trainings),
+  tolerances: many(tolerances),
+}));
+
+export const tolerancesRelations = relations(tolerances, ({ one }) => ({
+  area: one(areas, { fields: [tolerances.areaId], references: [areas.id] }),
 }));
 
 export const trainingsRelations = relations(trainings, ({ one, many }) => ({

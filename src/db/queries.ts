@@ -1,4 +1,4 @@
-import { and, asc, count, desc, eq, gte, inArray, isNotNull, lte } from "drizzle-orm";
+import { and, asc, count, desc, eq, gte, inArray, isNotNull, isNull, lte } from "drizzle-orm";
 import { db } from "./index";
 import {
   areas,
@@ -12,6 +12,7 @@ import {
   notes,
   seasons,
   thoughts,
+  tolerances,
   trainings,
   visions,
   weeklyReviews,
@@ -579,4 +580,35 @@ export async function getBeliefReframe(
 
   await db.update(beliefs).set({ reframe }).where(eq(beliefs.id, belief.id));
   return reframe;
+}
+
+export type Tolerance = typeof tolerances.$inferSelect;
+
+/** Počet nezaradených položiek, na jemné pripomenutie na Dnes. */
+export async function getUntriagedToleranceCount() {
+  const [row] = await db
+    .select({ total: count() })
+    .from(tolerances)
+    .where(and(isNull(tolerances.areaId), isNull(tolerances.doneAt)));
+  return Number(row?.total ?? 0);
+}
+
+/** Tolerancie: nezaradené, otvorené (podľa energie), naplánované a hotové. */
+export async function getTolerancesView() {
+  const all = await db
+    .select()
+    .from(tolerances)
+    .orderBy(desc(tolerances.createdAt));
+  const areaList = await db.select().from(areas).orderBy(asc(areas.position));
+
+  const untriaged = all.filter((t) => !t.doneAt && t.areaId === null);
+  const open = all
+    .filter((t) => !t.doneAt && t.areaId !== null && !t.dueDate)
+    .sort((a, b) => (b.energy ?? 0) - (a.energy ?? 0));
+  const scheduled = all
+    .filter((t) => !t.doneAt && t.dueDate)
+    .sort((a, b) => (a.dueDate! < b.dueDate! ? -1 : 1));
+  const done = all.filter((t) => t.doneAt);
+
+  return { areas: areaList, untriaged, open, scheduled, done };
 }

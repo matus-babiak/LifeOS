@@ -4,12 +4,18 @@ import {
   Plus,
   Sunrise,
 } from "lucide-react";
+import Link from "next/link";
 import DailyMentor from "@/components/DailyMentor";
 import FocusCheckbox from "@/components/FocusCheckbox";
 import HabitCheckbox from "@/components/HabitCheckbox";
 import MorningForm from "@/components/MorningForm";
+import QuickAddTolerance from "@/components/QuickAddTolerance";
 import { MentorSkeleton } from "@/components/Skeleton";
-import { getActiveTrainingSteps, getTodayView } from "@/db/queries";
+import {
+  getActiveTrainingSteps,
+  getTodayView,
+  getUntriagedToleranceCount,
+} from "@/db/queries";
 import { formatHuman, isEvening, weekStart } from "@/lib/dates";
 import { addDays } from "@/lib/dates";
 import { isDueOn, missedYesterday } from "@/lib/habits";
@@ -22,6 +28,7 @@ export default async function TodayPage() {
     (s) => s.dailyStep as string,
   );
   const trainingSteps = allTrainingSteps.slice(0, 3);
+  const untriagedCount = await getUntriagedToleranceCount();
   const evening = isEvening();
   const morningDone = !!checkin?.morningDoneAt;
   const eveningDone = !!checkin?.eveningDoneAt;
@@ -38,6 +45,22 @@ export default async function TodayPage() {
           {evening ? "Dobrý večer" : "Dobré ráno"}
         </h1>
       </header>
+
+      {/* Tolerancie - rýchly zápis, čo ma práve štve */}
+      <section className="rounded-2xl border border-line bg-surface p-4 shadow-sm">
+        <div className="mb-3 flex items-center justify-between gap-3">
+          <h2 className="text-sm font-medium text-muted">Čo ma práve štve?</h2>
+          {untriagedCount > 0 && (
+            <Link
+              href="/tolerancie"
+              className="shrink-0 text-xs text-accent-ink hover:underline"
+            >
+              {untriagedCount} na zaradenie
+            </Link>
+          )}
+        </div>
+        <QuickAddTolerance placeholder="Napíš to a pusti z hlavy" />
+      </section>
 
       {/* Denný mentor */}
       <Suspense fallback={<MentorSkeleton />}>
