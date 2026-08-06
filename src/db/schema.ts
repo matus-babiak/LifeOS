@@ -31,6 +31,14 @@ export const trainingStatus = pgEnum("training_status", [
 
 export const attentionBucket = pgEnum("attention_bucket", ["now", "later"]);
 
+export const activeBlockSource = pgEnum("active_block_source", [
+  "journal",
+  "belief",
+  "manual",
+  "mentor",
+]);
+
+
 // 6 oblastí života - seedujú sa pri prvom spustení
 export const areas = pgTable("areas", {
   id: serial("id").primaryKey(),
@@ -232,6 +240,25 @@ export const attentionItems = pgTable("attention_items", {
     onDelete: "set null",
   }),
   note: text("note"),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+});
+
+// Aktívne bloky - pretrvávajúce problémy, kým closed_at nie je nastavené
+export const activeBlocks = pgTable("active_blocks", {
+  id: serial("id").primaryKey(),
+  title: text("title").notNull(),
+  body: text("body"),
+  sourceType: activeBlockSource("source_type").notNull().default("manual"),
+  sourceId: integer("source_id"),
+  severity: integer("severity"), // 1-3, null = bez priority
+  reminderCount: integer("reminder_count").notNull().default(0),
+  lastNotifiedAt: timestamp("last_notified_at", { withTimezone: true }),
+  closedAt: timestamp("closed_at", { withTimezone: true }),
   createdAt: timestamp("created_at", { withTimezone: true })
     .notNull()
     .defaultNow(),

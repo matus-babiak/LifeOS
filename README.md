@@ -22,19 +22,25 @@ a bez `DATABASE_URL` sa použije vstavaná PGlite databáza.
 1. **Vercel projekt** - vercel.com → Add New Project → importuj repo `matus-babiak/LifeOS`.
 2. **Databáza** - v projekte na Verceli: Storage → Create Database → **Neon (Postgres)**.
    Vercel automaticky doplní `DATABASE_URL` do env premenných.
-3. **GitHub OAuth App** - github.com → Settings → Developer settings → OAuth Apps → New:
-   - Application name: `LifeOS`
-   - Homepage URL: `https://<tvoja-domena>.vercel.app`
-   - Authorization callback URL: `https://<tvoja-domena>.vercel.app/api/auth/callback/github`
-4. **Env premenné na Verceli** (Settings → Environment Variables):
-   - `AUTH_GITHUB_ID` - Client ID z OAuth App
-   - `AUTH_GITHUB_SECRET` - Client Secret z OAuth App
+3. **Env premenné na Verceli** (Settings → Environment Variables):
    - `AUTH_SECRET` - vygeneruj: `openssl rand -base64 32`
-   - `ALLOWED_GITHUB_LOGIN` - `matus-babiak` (jediný účet, ktorý smie dnu)
+   - `APP_PASSWORD` - heslo do appky
+   - `GEMINI_API_KEY` - voliteľné, pre AI mentora
+   - `CRON_SECRET` - secret pre Vercel Cron (`openssl rand -base64 32`)
+   - `TELEGRAM_BOT_TOKEN` - token od @BotFather
+   - `TELEGRAM_CHAT_ID` - tvoje chat ID (napr. cez @userinfobot)
+   - `TELEGRAM_WEBHOOK_SECRET` - voliteľné, ale odporúčané (rovnaký secret pri `setWebhook`)
+4. **Telegram webhook** (po deployi):
+   ```bash
+   curl -X POST "https://api.telegram.org/bot$TELEGRAM_BOT_TOKEN/setWebhook" \
+     -H "Content-Type: application/json" \
+     -d "{\"url\":\"https://<tvoja-domena>.vercel.app/api/telegram\",\"secret_token\":\"$TELEGRAM_WEBHOOK_SECRET\"}"
+   ```
+   Cron `/api/cron/reminders` beží denne o 05:00 UTC (~07:00 SELČ / ~06:00 CET) a pošle top aktívny blok.
 5. **Tabuľky v produkčnej DB** - `npm run build` na Verceli si pred `next build`
    automaticky spustí `drizzle-kit push --force`, takže schéma sa pri každom
    nasadení sama zosynchronizuje s `DATABASE_URL`. Ručný krok netreba.
-6. Redeploy. Hotovo - appka je súkromná, pustí len tvoj GitHub účet.
+6. Redeploy. Hotovo.
 
 ## Ikona na ploche (iPhone)
 

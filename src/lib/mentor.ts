@@ -9,6 +9,7 @@ export type MentorContext = {
   lastWeekReview: { win: string | null; pattern: string | null; change: string | null } | null;
   habitConsistency: { name: string; done: number; days: number }[];
   recentJournal: { situation: string; principle: string | null }[];
+  openBlocks: { title: string; body: string | null }[];
 };
 
 /** Zostaví prompt pre denného mentora z dát dňa aj širšieho kontextu (sezóna, história). */
@@ -68,6 +69,18 @@ export function buildMentorPrompt(ctx: MentorContext): string {
 
   if (ctx.trainingSteps.length > 0) {
     lines.push(`Aktívne denné kroky tréningov: ${ctx.trainingSteps.join(", ")}.`);
+  }
+
+  if (ctx.openBlocks.length > 0) {
+    const text = ctx.openBlocks
+      .map((b) => (b.body ? `${b.title} (${b.body})` : b.title))
+      .join("; ");
+    lines.push(
+      `Otvorené aktívne bloky (stále nevyriešené, majú visieť v hlave): ${text}.`,
+    );
+    lines.push(
+      "Ak dáva zmysel, jemne jedno z nich pripomeň a prepoj s dnešnou akciou - bez moralizovania.",
+    );
   }
 
   return lines.join("\n");
@@ -162,4 +175,75 @@ export function buildBeliefReframePrompt(beliefText: string): string {
     "",
     `Limitujúce presvedčenie: "${beliefText}"`,
   ].join("\n");
+}
+
+export type JournalBlockEntry = {
+  situation: string;
+  reaction: string | null;
+  feeling: string | null;
+  meaning: string | null;
+  lesson: string | null;
+  principle: string | null;
+};
+
+export type BlockCandidate = {
+  title: string;
+  why: string;
+  severity: 1 | 2 | 3 | null;
+};
+
+/** Prompt: Gemini vráti len JSON pole 0-2 kandidátov na aktívne bloky. */
+export function buildJournalBlockExtractionPrompt(
+  entry: JournalBlockEntry,
+): string {
+  return [
+    "Si mentor v LifeOS. Z reflexného zápisu vytiahni pretrvávajúce otvorené problémy (bloky), ktoré by mali visieť, kým ich človek nevyrieši.",
+    "Vráť IBA platný JSON, nič iné (žiadny markdown, žiadny komentár).",
+    'Formát: [{"title":"krátky názov bloku","why":"prečo to ešte nie je vyriešené","severity":1|2|3}]',
+    "severity: 1 = vysoká, 2 = stredná, 3 = nízka.",
+    "Maximálne 2 položky. Ak v zápise nie je jasný pretrvávajúci blok, vráť [].",
+    "Nepoužívaj všeobecné rady ako bloky. Len konkrétne nevyriešené napätie alebo vzorec.",
+    "",
+    `Situácia: ${entry.situation}`,
+    entry.reaction ? `Reakcia: ${entry.reaction}` : "",
+    entry.feeling ? `Pocit: ${entry.feeling}` : "",
+    entry.meaning ? `Čo to ukazuje: ${entry.meaning}` : "",
+    entry.lesson ? `Lekcia: ${entry.lesson}` : "",
+    entry.principle ? `Princíp: ${entry.principle}` : "",
+  ]
+    .filter(Boolean)
+    .join("\n");
+}
+
+/** Parsuje JSON kandidátov z Gemini výstupu (aj s markdown fence). */
+export function parseBlockCandidates(raw: string | null): BlockCandidate[] {
+  if (!raw) return [];
+
+  let text = raw.trim();
+  const fenced = text.match(/```(?:json)?\s*([\s\S]*?)```/i);
+  if (fenced) text = fenced[1].trim();
+
+  try {
+    const parsed = JSON.parse(text) as unknown;
+    if (!Array.isArray(parsed)) return [];
+
+    const out: BlockCandidate[] = [];
+    for (const item of parsed.slice(0, 2)) {
+      if (!item || typeof item !== "object") continue;
+      const row = item as Record<string, unknown>;
+      const title = typeof row.title === "string" ? row.title.trim() : "";
+      if (!title) continue;
+      const why =
+        typeof row.why === "string" && row.why.trim().length > 0
+          ? row.why.trim()
+          : "";
+      const sevRaw = Number(row.severity);
+      const severity =
+        sevRaw === 1 || sevRaw === 2 || sevRaw === 3 ? sevRaw : null;
+      out.push({ title, why, severity });
+    }
+    return out;
+  } catch {
+    return [];
+  }
 }

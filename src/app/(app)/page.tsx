@@ -6,12 +6,14 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import DailyMentor from "@/components/DailyMentor";
+import ActiveBlocksPanel from "@/components/ActiveBlocksPanel";
 import FocusCheckbox from "@/components/FocusCheckbox";
 import HabitCheckbox from "@/components/HabitCheckbox";
 import MorningForm from "@/components/MorningForm";
 import QuickAddTolerance from "@/components/QuickAddTolerance";
 import { MentorSkeleton } from "@/components/Skeleton";
 import {
+  getActiveBlocks,
   getActiveTrainingSteps,
   getTodayView,
   getUntriagedToleranceCount,
@@ -22,14 +24,16 @@ import { isDueOn, missedYesterday } from "@/lib/habits";
 import { addFocus, saveEvening } from "./actions";
 
 export default async function TodayPage() {
-  const [view, trainingStepRows] = await Promise.all([
-    getTodayView(),
-    getActiveTrainingSteps(),
-  ]);
+  const [view, trainingStepRows, openBlocks, untriagedCount] =
+    await Promise.all([
+      getTodayView(),
+      getActiveTrainingSteps(),
+      getActiveBlocks(),
+      getUntriagedToleranceCount(),
+    ]);
   const { today, checkin, focus, habits, recentLogs, totals } = view;
   const allTrainingSteps = trainingStepRows.map((s) => s.dailyStep as string);
   const trainingSteps = allTrainingSteps.slice(0, 3);
-  const untriagedCount = await getUntriagedToleranceCount();
   const evening = isEvening();
   const morningDone = !!checkin?.morningDoneAt;
   const eveningDone = !!checkin?.eveningDoneAt;
@@ -46,6 +50,9 @@ export default async function TodayPage() {
           {evening ? "Dobrý večer" : "Dobré ráno"}
         </h1>
       </header>
+
+      {/* Aktívne bloky - visia, kým ich manuálne neuzavrieš */}
+      <ActiveBlocksPanel blocks={openBlocks} />
 
       {/* Tolerancie - rýchly zápis, čo ma práve štve */}
       <section className="rounded-2xl border border-line bg-surface p-4 shadow-sm">

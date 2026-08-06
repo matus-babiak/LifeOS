@@ -1,7 +1,8 @@
-import { and, asc, count, desc, eq, gte, inArray, isNotNull, isNull, lte } from "drizzle-orm";
+import { and, asc, count, desc, eq, gte, inArray, isNotNull, isNull, lte, sql } from "drizzle-orm";
 import { db } from "./index";
 import {
   areas,
+  activeBlocks,
   attentionItems,
   beliefs,
   dailyCheckins,
@@ -140,7 +141,7 @@ export async function getMentorMessage(
   const habitIds = view.habits.map((h) => h.id);
   const twoWeeksAgo = addDays(view.today, -13);
 
-  const [[activeSeason], [lastWeekReview], twoWeekLogs, journalRows] =
+  const [[activeSeason], [lastWeekReview], twoWeekLogs, journalRows, openBlocks] =
     await Promise.all([
       db.select().from(seasons).where(eq(seasons.active, true)),
       db
@@ -162,6 +163,15 @@ export async function getMentorMessage(
             )
         : Promise.resolve([]),
       db.select().from(journalEntries).orderBy(desc(journalEntries.createdAt)).limit(2),
+      db
+        .select({
+          title: activeBlocks.title,
+          body: activeBlocks.body,
+        })
+        .from(activeBlocks)
+        .where(isNull(activeBlocks.closedAt))
+        .orderBy(asc(activeBlocks.createdAt))
+        .limit(5),
     ]);
 
   const habitConsistency = view.habits.map((h) => ({
@@ -181,6 +191,7 @@ export async function getMentorMessage(
       : null,
     habitConsistency,
     recentJournal: journalRows.map((j) => ({ situation: j.situation, principle: j.principle })),
+    openBlocks,
   });
 
   const message = await generateText(prompt);
@@ -606,6 +617,19 @@ export async function getBeliefReframe(
 }
 
 export type Tolerance = typeof tolerances.$inferSelect;
+export type ActiveBlock = typeof activeBlocks.$inferSelect;
+
+/** Otvorené aktívne bloky (closed_at IS NULL), najvyššia priorita najprv. */
+export async function getActiveBlocks() {
+  return db
+    .select()
+    .from(activeBlocks)
+    .where(isNull(activeBlocks.closedAt))
+    .orderBy(
+      sql`CASE WHEN ${activeBlocks.severity} IS NULL THEN 99 ELSE ${activeBlocks.severity} END`,
+      desc(activeBlocks.createdAt),
+    );
+}
 
 /** Počet nezaradených položiek, na jemné pripomenutie na Dnes. */
 export async function getUntriagedToleranceCount() {
