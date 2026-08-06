@@ -247,3 +247,50 @@ export function parseBlockCandidates(raw: string | null): BlockCandidate[] {
     return [];
   }
 }
+
+export type TelegramChatContext = {
+  userMessage: string;
+  recentJournal: {
+    situation: string;
+    principle: string | null;
+    lesson: string | null;
+  }[];
+  openBlocks: { title: string; body: string | null }[];
+};
+
+/** Prompt pre voľný chat s mentorom cez Telegram. */
+export function buildTelegramChatPrompt(ctx: TelegramChatContext): string {
+  const lines: string[] = [
+    "Si prísny, vecný a priamy osobný mentor v aplikácii LifeOS.",
+    "Odpovedaj v slovenčine, 2-6 viet. Žiadny pozdrav, žiadne prázdne motivačné frázy, žiadne úvodzovky okolo celej odpovede.",
+    "Buď konkrétny: pomenuj vzorec, navrhni jeden malý ďalší krok, alebo polož jednu ostrú otázku.",
+    "Použi kontext nižšie, ak pomáha. Ak kontext nestačí, povedz to priamo a spýtaj sa na chýbajúce.",
+    "",
+  ];
+
+  if (ctx.openBlocks.length > 0) {
+    const text = ctx.openBlocks
+      .map((b) => (b.body ? `${b.title}: ${b.body}` : b.title))
+      .join("; ");
+    lines.push(`Otvorené aktívne bloky: ${text}.`);
+  } else {
+    lines.push("Otvorené aktívne bloky: žiadne.");
+  }
+
+  if (ctx.recentJournal.length > 0) {
+    const text = ctx.recentJournal
+      .map((j) => {
+        const parts = [j.situation];
+        if (j.lesson) parts.push(`lekcia: ${j.lesson}`);
+        if (j.principle) parts.push(`princíp: ${j.principle}`);
+        return parts.join(" / ");
+      })
+      .join(" || ");
+    lines.push(`Posledné zápisy z denníka: ${text}.`);
+  } else {
+    lines.push("Posledné zápisy z denníka: žiadne.");
+  }
+
+  lines.push("", `Správa od človeka: ${ctx.userMessage}`);
+  return lines.join("\n");
+}

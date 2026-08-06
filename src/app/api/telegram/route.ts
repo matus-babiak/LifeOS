@@ -1,5 +1,6 @@
 import { revalidatePath } from "next/cache";
 import { appendBlockNote, closeBlockById } from "@/lib/active-blocks";
+import { replyAsTelegramMentor } from "@/lib/telegram-mentor";
 import {
   answerCallbackQuery,
   editMessageReplyMarkup,
@@ -87,7 +88,6 @@ async function handleCallback(query: TelegramCallbackQuery) {
   }
 
   if (parsed.action === "close") {
-    // Rovnaká DB logika ako closeActiveBlock (bez cookie session)
     const closed = await closeBlockById(parsed.blockId);
     await answerCallbackQuery(
       query.id,
@@ -116,23 +116,37 @@ async function handleMessage(message: TelegramMessage) {
   const text = message.text?.trim();
   if (!text) return;
 
-  // Poznámka: odpoveď na pripomenutie (BLK:id) alebo na výzvu po „Dopísať“
+  const chatId = message.chat.id;
+
+  // 1) Odpoveď na BLK:id → poznámka k aktívnemu bloku (nie chat)
   const replied = message.reply_to_message?.text;
-  if (!replied) return;
+  if (replied) {
+    const blockId = parseBlockIdFromNotePrompt(replied);
+    if (blockId != null) {
+      const updated = await appendBlockNote(blockId, text);
+      if (!updated) {
+        await sendTelegramMessage("Blok sa nenašiel alebo už je uzavretý.", {
+          chatId,
+        });
+        return;
+      }
+      await sendTelegramMessage(`Poznámka uložená k „${updated.title}“.`, {
+        chatId,
+      });
+      revalidatePath("/");
+      return;
+    }
+  }
 
-  const blockId = parseBlockIdFromNotePrompt(replied);
-  if (blockId == null) return;
-
-  const updated = await appendBlockNote(blockId, text);
-  if (!updated) {
-    await sendTelegramMessage("Blok sa nenašiel alebo už je uzavretý.", {
-      chatId: message.chat.id,
-    });
+  // 2) Bežná správa → chat s AI mentorom
+  if (text === "/start") {
+    await sendTelegramMessage(
+      "LifeOS mentor je tu. Napíš, čo ťa tlačí, alebo počkaj na ranné pripomenutie aktívneho bloku.",
+      { chatId },
+    );
     return;
   }
 
-  await sendTelegramMessage(`Poznámka uložená k „${updated.title}“.`, {
-    chatId: message.chat.id,
-  });
-  revalidatePath("/");
+  const answer = await replyAsTelegramMentor(text);
+  await sendTelegramMessage(answer, { chatId });
 }
