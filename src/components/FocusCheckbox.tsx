@@ -1,25 +1,33 @@
 "use client";
 
-import { useOptimistic, useTransition } from "react";
+import { useOptimistic, useState, useTransition } from "react";
 import { Check } from "lucide-react";
 import { toggleFocus } from "@/app/(app)/actions";
 
 export default function FocusCheckbox({
   id,
   text,
-  done,
+  done: doneProp,
 }: {
   id: number;
   text: string;
   done: boolean;
 }) {
+  const [done, setDone] = useState(doneProp);
+  const [prevDoneProp, setPrevDoneProp] = useState(doneProp);
+  if (doneProp !== prevDoneProp) {
+    setPrevDoneProp(doneProp);
+    setDone(doneProp);
+  }
+
   const [optimisticDone, setOptimisticDone] = useOptimistic(done);
   const [, startTransition] = useTransition();
 
   function handleClick() {
     startTransition(async () => {
-      setOptimisticDone(!optimisticDone);
-      await toggleFocus(id);
+      setOptimisticDone(!done);
+      const result = await toggleFocus(id);
+      if (result) setDone(result.done);
     });
   }
 

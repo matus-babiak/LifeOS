@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { and, count, eq } from "drizzle-orm";
+import { and, count, eq, sql } from "drizzle-orm";
 import { db } from "@/db";
 import {
   dailyCheckins,
@@ -11,6 +11,13 @@ import {
 } from "@/db/schema";
 import { todayISO } from "@/lib/dates";
 import { requireUser } from "@/lib/session";
+
+export type ToggleFocusResult = { id: number; done: boolean };
+export type ToggleHabitResult = {
+  doneToday: boolean;
+  collected: number;
+  status: "building" | "established";
+};
 
 function text(formData: FormData, key: string): string | null {
   const value = formData.get(key);
@@ -78,15 +85,17 @@ export async function saveEvening(formData: FormData) {
   revalidatePath("/");
 }
 
-export async function toggleFocus(id: number) {
+/** Prepne fokus bez revalidatePath: klient potvrdí stav z návratovej hodnoty. */
+export async function toggleFocus(
+  id: number,
+): Promise<ToggleFocusResult | null> {
   await requireUser();
-  const [item] = await db.select().from(focusItems).where(eq(focusItems.id, id));
-  if (!item) return;
-  await db
+  const [updated] = await db
     .update(focusItems)
-    .set({ done: !item.done })
-    .where(eq(focusItems.id, id));
-  revalidatePath("/");
+    .set({ done: sql`NOT ${focusItems.done}` })
+    .where(eq(focusItems.id, id))
+    .returning({ id: focusItems.id, done: focusItems.done });
+  return updated ?? null;
 }
 
 export async function addFocus(formData: FormData) {
@@ -108,45 +117,60 @@ export async function addFocus(formData: FormData) {
   revalidatePath("/");
 }
 
-export async function toggleHabit(habitId: number) {
+/**
+ * Prepne dnešný log návyku bez plného RSC refetchu.
+ * Habit + existujúci log idú paralelne; status sa nastaví jedným UPDATE s COUNT v SQL.
+ */
+export async function toggleHabit(
+  habitId: number,
+): Promise<ToggleHabitResult | null> {
   await requireUser();
   const today = todayISO();
 
-  const [habit] = await db.select().from(habits).where(eq(habits.id, habitId));
-  if (!habit || habit.status === "archived") return;
+  const [habitRows, logRows] = await Promise.all([
+    db.select().from(habits).where(eq(habits.id, habitId)),
+    db
+      .select()
+      .from(habitLogs)
+      .where(and(eq(habitLogs.habitId, habitId), eq(habitLogs.date, today))),
+  ]);
 
-  const [existing] = await db
-    .select()
-    .from(habitLogs)
-    .where(and(eq(habitLogs.habitId, habitId), eq(habitLogs.date, today)));
+  const habit = habitRows[0];
+  if (!habit || habit.status === "archived") return null;
 
+  const existing = logRows[0];
+  let doneToday: boolean;
   if (existing) {
     await db.delete(habitLogs).where(eq(habitLogs.id, existing.id));
+    doneToday = false;
   } else {
     await db.insert(habitLogs).values({ habitId, date: today });
+    doneToday = true;
   }
 
-  // Fáza budovania → zabehnutý (a späť, ak odškrtnutie klesne pod cieľ)
-  const [{ total }] = await db
-    .select({ total: count() })
-    .from(habitLogs)
-    .where(eq(habitLogs.habitId, habitId));
-  const collected = Number(total);
+  // Jeden round-trip: spočíta logy a nastaví building/established
+  const [row] = await db
+    .update(habits)
+    .set({
+      status: sql`CASE
+        WHEN (SELECT COUNT(*)::int FROM habit_logs WHERE habit_id = ${habitId}) >= ${habit.targetDays}
+        THEN 'established'::habit_status
+        ELSE 'building'::habit_status
+      END`,
+    })
+    .where(eq(habits.id, habitId))
+    .returning({
+      status: habits.status,
+      collected: sql<number>`(SELECT COUNT(*)::int FROM habit_logs WHERE habit_id = ${habitId})`,
+    });
 
-  if (habit.status === "building" && collected >= habit.targetDays) {
-    await db
-      .update(habits)
-      .set({ status: "established" })
-      .where(eq(habits.id, habitId));
-  } else if (habit.status === "established" && collected < habit.targetDays) {
-    await db
-      .update(habits)
-      .set({ status: "building" })
-      .where(eq(habits.id, habitId));
-  }
+  if (!row) return null;
 
-  revalidatePath("/");
-  revalidatePath("/navyky");
+  return {
+    doneToday,
+    collected: Number(row.collected),
+    status: row.status === "established" ? "established" : "building",
+  };
 }
 
 export async function createHabit(formData: FormData) {

@@ -29,6 +29,8 @@ export const trainingStatus = pgEnum("training_status", [
   "completed",
 ]);
 
+export const attentionBucket = pgEnum("attention_bucket", ["now", "later"]);
+
 // 6 oblastí života - seedujú sa pri prvom spustení
 export const areas = pgTable("areas", {
   id: serial("id").primaryKey(),
@@ -220,9 +222,28 @@ export const visions = pgTable("visions", {
     .defaultNow(),
 });
 
+// Pozornosť - kam ide energia teraz vs čo odkladám
+export const attentionItems = pgTable("attention_items", {
+  id: serial("id").primaryKey(),
+  text: text("text").notNull(),
+  bucket: attentionBucket("bucket").notNull(),
+  position: integer("position").notNull().default(0),
+  areaId: integer("area_id").references(() => areas.id, {
+    onDelete: "set null",
+  }),
+  note: text("note"),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+});
+
 export const areasRelations = relations(areas, ({ many }) => ({
   trainings: many(trainings),
   tolerances: many(tolerances),
+  attentionItems: many(attentionItems),
 }));
 
 export const tolerancesRelations = relations(tolerances, ({ one }) => ({
@@ -252,4 +273,11 @@ export const habitsRelations = relations(habits, ({ one, many }) => ({
 
 export const habitLogsRelations = relations(habitLogs, ({ one }) => ({
   habit: one(habits, { fields: [habitLogs.habitId], references: [habits.id] }),
+}));
+
+export const attentionItemsRelations = relations(attentionItems, ({ one }) => ({
+  area: one(areas, {
+    fields: [attentionItems.areaId],
+    references: [areas.id],
+  }),
 }));

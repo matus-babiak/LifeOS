@@ -2,6 +2,7 @@ import { and, asc, count, desc, eq, gte, inArray, isNotNull, isNull, lte } from 
 import { db } from "./index";
 import {
   areas,
+  attentionItems,
   beliefs,
   dailyCheckins,
   focusItems,
@@ -566,6 +567,28 @@ export async function getBeliefsView() {
     .select()
     .from(beliefs)
     .orderBy(asc(beliefs.resolved), desc(beliefs.createdAt));
+}
+
+/** Pozornosť: položky rozdelené na now / later + oblasti na výber. */
+export async function getAttentionView() {
+  const [items, areaList] = await Promise.all([
+    db
+      .select()
+      .from(attentionItems)
+      .orderBy(
+        asc(attentionItems.position),
+        desc(attentionItems.createdAt),
+      ),
+    db.select().from(areas).orderBy(asc(areas.position)),
+  ]);
+
+  const areaById = new Map(areaList.map((a) => [a.id, a]));
+  return {
+    now: items.filter((i) => i.bucket === "now"),
+    later: items.filter((i) => i.bucket === "later"),
+    areas: areaList,
+    areaById,
+  };
 }
 
 /** AI reframe presvedčenia - vygeneruje sa raz a natrvalo sa uloží k presvedčeniu. */

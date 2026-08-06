@@ -22,11 +22,12 @@ import { isDueOn, missedYesterday } from "@/lib/habits";
 import { addFocus, saveEvening } from "./actions";
 
 export default async function TodayPage() {
-  const view = await getTodayView();
+  const [view, trainingStepRows] = await Promise.all([
+    getTodayView(),
+    getActiveTrainingSteps(),
+  ]);
   const { today, checkin, focus, habits, recentLogs, totals } = view;
-  const allTrainingSteps = (await getActiveTrainingSteps()).map(
-    (s) => s.dailyStep as string,
-  );
+  const allTrainingSteps = trainingStepRows.map((s) => s.dailyStep as string);
   const trainingSteps = allTrainingSteps.slice(0, 3);
   const untriagedCount = await getUntriagedToleranceCount();
   const evening = isEvening();
