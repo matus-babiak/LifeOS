@@ -1,13 +1,5 @@
-import {
-  getOldestOpenBlock,
-  markBlockNotified,
-} from "@/lib/active-blocks";
-import {
-  blockReminderKeyboard,
-  formatBlockReminder,
-  sendTelegramMessage,
-  telegramConfigured,
-} from "@/lib/telegram";
+import { generateMorningInsight } from "@/lib/morning-insight";
+import { sendTelegramMessage, telegramConfigured } from "@/lib/telegram";
 
 export const runtime = "nodejs";
 
@@ -15,7 +7,10 @@ function unauthorized() {
   return Response.json({ ok: false, error: "unauthorized" }, { status: 401 });
 }
 
-/** Vercel Cron: ranné pripomenutie najstaršieho otvoreného aktívneho bloku. */
+/**
+ * Vercel Cron: autonómna ranná analýza denníka/presvedčení cez Gemini
+ * a odoslanie 1 kľúčového mentálneho bloku do Telegramu.
+ */
 export async function GET(req: Request) {
   const secret = process.env.CRON_SECRET?.trim();
   if (!secret) {
@@ -40,14 +35,19 @@ export async function GET(req: Request) {
     );
   }
 
-  const block = await getOldestOpenBlock();
-  if (!block) {
-    return Response.json({ ok: true, sent: false, reason: "no_open_blocks" });
+  const result = await generateMorningInsight();
+  if (!result.insight) {
+    return Response.json({
+      ok: true,
+      sent: false,
+      reason: result.reason ?? "no_insight",
+      journalCount: result.journalCount,
+      beliefCount: result.beliefCount,
+    });
   }
 
-  const sent = await sendTelegramMessage(formatBlockReminder(block), {
-    replyMarkup: blockReminderKeyboard(block.id),
-  });
+  const message = `Ranný fokus\n\n${result.insight}`;
+  const sent = await sendTelegramMessage(message);
 
   if (!sent) {
     return Response.json(
@@ -56,12 +56,10 @@ export async function GET(req: Request) {
     );
   }
 
-  await markBlockNotified(block.id);
-
   return Response.json({
     ok: true,
     sent: true,
-    blockId: block.id,
-    title: block.title,
+    journalCount: result.journalCount,
+    beliefCount: result.beliefCount,
   });
 }

@@ -294,3 +294,69 @@ export function buildTelegramChatPrompt(ctx: TelegramChatContext): string {
   lines.push("", `Správa od človeka: ${ctx.userMessage}`);
   return lines.join("\n");
 }
+
+export type MorningInsightContext = {
+  recentJournal: {
+    situation: string;
+    reaction: string | null;
+    feeling: string | null;
+    meaning: string | null;
+    lesson: string | null;
+    principle: string | null;
+  }[];
+  beliefs: { text: string; reframe: string | null; resolved: boolean }[];
+  thoughts: { content: string }[];
+};
+
+/** Prompt pre ranný cron: 1 kľúčový mentálny blok z existujúceho obsahu. */
+export function buildMorningInsightPrompt(ctx: MorningInsightContext): string {
+  const lines: string[] = [
+    "Si prísny, vecný a priamy osobný mentor v aplikácii LifeOS.",
+    "Analyzuj posledné zápisy a presvedčenia užívateľa.",
+    "Identifikuj 1 kľúčový mentálny blok / problém, ktorý v živote práve rieši a na ktorý by sa mal dnes pozrieť.",
+    "Formuluj to ostro, vecne a priamo. 2-5 viet v slovenčine.",
+    "Bez pozdravu, bez oslovenia, bez prázdnych motivačných fráz, bez úvodzoviek okolo celej odpovede.",
+    "Ak dáta nestačia na jasný blok, pomenuj najväčší vzorec, ktorý z toho ide vyčítať, a daj jednu ostrú otázku na dnes.",
+    "",
+  ];
+
+  if (ctx.recentJournal.length === 0) {
+    lines.push("Denník: žiadne nedávne zápisy.");
+  } else {
+    lines.push("Denník (od najnovšieho):");
+    ctx.recentJournal.forEach((j, i) => {
+      const parts = [
+        `${i + 1}. Situácia: ${j.situation}`,
+        j.reaction && `reakcia: ${j.reaction}`,
+        j.feeling && `pocit: ${j.feeling}`,
+        j.meaning && `ukazuje: ${j.meaning}`,
+        j.lesson && `lekcia: ${j.lesson}`,
+        j.principle && `princíp: ${j.principle}`,
+      ].filter(Boolean);
+      lines.push(parts.join(" | "));
+    });
+  }
+
+  const openBeliefs = ctx.beliefs.filter((b) => !b.resolved);
+  if (openBeliefs.length === 0) {
+    lines.push("", "Otvorené presvedčenia: žiadne.");
+  } else {
+    lines.push("", "Otvorené presvedčenia:");
+    for (const b of openBeliefs) {
+      lines.push(
+        b.reframe
+          ? `- ${b.text} (reframe: ${b.reframe})`
+          : `- ${b.text}`,
+      );
+    }
+  }
+
+  if (ctx.thoughts.length > 0) {
+    lines.push("", "Nedávne myšlienky:");
+    for (const t of ctx.thoughts) {
+      lines.push(`- ${t.content}`);
+    }
+  }
+
+  return lines.join("\n");
+}
