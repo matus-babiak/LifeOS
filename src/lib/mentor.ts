@@ -256,15 +256,38 @@ export type TelegramChatContext = {
     lesson: string | null;
   }[];
   openBlocks: { title: string; body: string | null }[];
+  openTolerances: {
+    text: string;
+    energy: number | null;
+    firstStep: string | null;
+    dueDate: string | null;
+  }[];
+  recentWeeks: {
+    weekStart: string;
+    win: string | null;
+    pattern: string | null;
+    change: string | null;
+    summary: string | null;
+  }[];
+  attention: {
+    text: string;
+    bucket: "now" | "later";
+    note: string | null;
+  }[];
+  todayFocus: { text: string; done: boolean }[];
+  recentNotes: { category: string; content: string }[];
+  recentThoughts: { content: string }[];
+  openBeliefs: { text: string; reframe: string | null }[];
 };
 
-/** Prompt pre voľný chat s mentorom cez Telegram. */
+/** Prompt pre voľný chat s mentorom cez Telegram (široký LifeOS kontext). */
 export function buildTelegramChatPrompt(ctx: TelegramChatContext): string {
   const lines: string[] = [
     "Si prísny, vecný a priamy osobný mentor v aplikácii LifeOS.",
-    "Odpovedaj v slovenčine, 2-6 viet. Žiadny pozdrav, žiadne prázdne motivačné frázy, žiadne úvodzovky okolo celej odpovede.",
-    "Buď konkrétny: pomenuj vzorec, navrhni jeden malý ďalší krok, alebo polož jednu ostrú otázku.",
-    "Použi kontext nižšie, ak pomáha. Ak kontext nestačí, povedz to priamo a spýtaj sa na chýbajúce.",
+    "Odpovedaj v slovenčine, 2-8 viet. Žiadny pozdrav, žiadne prázdne motivačné frázy, žiadne úvodzovky okolo celej odpovede.",
+    "Kontext nižšie je odrazový mostík, nie skript. Primárne odpovedz na aktuálnu otázku / správu užívateľa.",
+    "Neopakuj stále tú istú šablónu (vzorec → lekcia → otázka). Prispôsob formu otázke: ak chce krok, daj konkrétny krok; ak chce zrkadlo, pomenuj vzorec; ak sa pýta priamo, odpovedz priamo.",
+    "Buď konkrétny a praktický. Ak kontext nestačí, povedz to a spýtaj sa na chýbajúce.",
     "",
   ];
 
@@ -289,6 +312,93 @@ export function buildTelegramChatPrompt(ctx: TelegramChatContext): string {
     lines.push(`Posledné zápisy z denníka: ${text}.`);
   } else {
     lines.push("Posledné zápisy z denníka: žiadne.");
+  }
+
+  if (ctx.openBeliefs.length > 0) {
+    const text = ctx.openBeliefs
+      .map((b) =>
+        b.reframe ? `${b.text} (reframe: ${b.reframe})` : b.text,
+      )
+      .join("; ");
+    lines.push(`Otvorené presvedčenia: ${text}.`);
+  } else {
+    lines.push("Otvorené presvedčenia: žiadne.");
+  }
+
+  if (ctx.recentThoughts.length > 0) {
+    lines.push(
+      `Nedávne myšlienky: ${ctx.recentThoughts.map((t) => t.content).join(" || ")}.`,
+    );
+  } else {
+    lines.push("Nedávne myšlienky: žiadne.");
+  }
+
+  if (ctx.openTolerances.length > 0) {
+    const text = ctx.openTolerances
+      .map((t) => {
+        const parts = [t.text];
+        if (t.energy != null) parts.push(`energia ${t.energy}/10`);
+        if (t.firstStep) parts.push(`prvý krok: ${t.firstStep}`);
+        if (t.dueDate) parts.push(`termín: ${t.dueDate}`);
+        return parts.join(", ");
+      })
+      .join("; ");
+    lines.push(`Aktívne tolerancie (čo odčerpáva energiu): ${text}.`);
+  } else {
+    lines.push("Aktívne tolerancie: žiadne.");
+  }
+
+  if (ctx.todayFocus.length > 0) {
+    const text = ctx.todayFocus
+      .map((f) => `${f.done ? "[x]" : "[ ]"} ${f.text}`)
+      .join("; ");
+    lines.push(`Dnešný fokus: ${text}.`);
+  } else {
+    lines.push("Dnešný fokus: prázdny.");
+  }
+
+  const attentionNow = ctx.attention.filter((a) => a.bucket === "now");
+  const attentionLater = ctx.attention.filter((a) => a.bucket === "later");
+  if (attentionNow.length === 0 && attentionLater.length === 0) {
+    lines.push("Pozornosť (teraz / odkladám): prázdna.");
+  } else {
+    if (attentionNow.length > 0) {
+      const text = attentionNow
+        .map((a) => (a.note ? `${a.text} (${a.note})` : a.text))
+        .join("; ");
+      lines.push(`Pozornosť - aktuálne dávam energiu: ${text}.`);
+    }
+    if (attentionLater.length > 0) {
+      const text = attentionLater
+        .map((a) => (a.note ? `${a.text} (${a.note})` : a.text))
+        .join("; ");
+      lines.push(`Pozornosť - odkladám / budúcnosť: ${text}.`);
+    }
+  }
+
+  if (ctx.recentWeeks.length > 0) {
+    const text = ctx.recentWeeks
+      .map((w) => {
+        const parts = [`týždeň ${w.weekStart}`];
+        if (w.win) parts.push(`víťazstvo: ${w.win}`);
+        if (w.pattern) parts.push(`vzorec: ${w.pattern}`);
+        if (w.change) parts.push(`zmena: ${w.change}`);
+        if (w.summary) parts.push(`súhrn: ${w.summary}`);
+        return parts.join(", ");
+      })
+      .join(" || ");
+    lines.push(`Týždenné reflexie: ${text}.`);
+  } else {
+    lines.push("Týždenné reflexie: žiadne.");
+  }
+
+  if (ctx.recentNotes.length > 0) {
+    const text = ctx.recentNotes
+      .map((n) => `[${n.category}] ${n.content}`)
+      .join(" || ");
+    lines.push(`Najnovšie poznámky: ${text}.`);
+  } else {
+    lines.push("Najnovšie poznámky: žiadne.");
   }
 
   lines.push("", `Správa od človeka: ${ctx.userMessage}`);
