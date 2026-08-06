@@ -5,6 +5,7 @@ import { verifyToken } from "@/lib/session-token";
 
 function isPublicPath(pathname: string): boolean {
   if (pathname === "/login") return true;
+  if (pathname === "/ikona") return true;
   // Telegram webhook a Vercel Cron majú vlastné secret overenie
   if (pathname.startsWith("/api/telegram")) return true;
   if (pathname.startsWith("/api/cron/")) return true;

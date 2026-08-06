@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { LogIn } from "lucide-react";
@@ -44,6 +45,13 @@ export default async function LoginPage({
           Kým sa stávam a aké kroky ma k tomu dnes približujú?
         </p>
       </div>
+
+      <Link
+        href="/ikona"
+        className="text-xs text-muted transition-colors hover:text-ink"
+      >
+        Stiahnuť ikonu do mobilu
+      </Link>
 
       <form action={login} className="flex w-full max-w-xs flex-col gap-3">
         <input

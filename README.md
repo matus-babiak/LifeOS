@@ -42,10 +42,15 @@ a bez `DATABASE_URL` sa použije vstavaná PGlite databáza.
    nasadení sama zosynchronizuje s `DATABASE_URL`. Ručný krok netreba.
 6. Redeploy. Hotovo.
 
-## Ikona na ploche (iPhone)
+## Ikona do mobilu
 
-Safari → otvor appku → Zdieľať → **Pridať na plochu**. LifeOS sa potom otvára
-celoobrazovkovo ako natívna aplikácia (PWA manifest + apple-touch-icon sú súčasťou).
+**Stiahnuť obrázok ikony:** otvor v mobile [life-os-beta-pink.vercel.app/ikona](https://life-os-beta-pink.vercel.app/ikona)
+a stiahni PNG (512 × 512 odporúčané). Ak tlačidlo nefunguje, podrž prst na
+obrázku → Uložiť do Fotiek.
+
+**Pridať appku na plochu (PWA):** Safari / Chrome → Zdieľať alebo menu →
+**Pridať na plochu**. LifeOS sa potom otvára celoobrazovkovo ako natívna
+aplikácia (manifest + apple-touch-icon sú súčasťou).
 
 ## Stack
 
