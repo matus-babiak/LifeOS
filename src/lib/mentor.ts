@@ -10,7 +10,7 @@ export type MentorContext = {
   habitConsistency: { name: string; done: number; days: number }[];
   recentJournal: { situation: string; principle: string | null }[];
   openBlocks: { title: string; body: string | null }[];
-  contextNotes: { title: string; noteDate: string | null; excerpt: string }[];
+  contextNotes: { title: string; noteDate: string | null; content: string }[];
 };
 
 /** Zostaví prompt pre denného mentora z dát dňa aj širšieho kontextu (sezóna, história). */
@@ -55,10 +55,10 @@ export function buildMentorPrompt(ctx: MentorContext): string {
 
   if (ctx.contextNotes.length > 0) {
     lines.push(
-      "Nedávne poznámky z Obsidianu (novšie = aktuálnejší kontext, uprednostni ich):",
+      `Celý dostupný kontext z Obsidianu (${ctx.contextNotes.length} poznámok, zoradené od najnovšej - novšie ber ako aktuálnejšie a uprednostni ich):`,
     );
     for (const n of ctx.contextNotes) {
-      lines.push(`- ${n.noteDate ?? n.title}: ${n.excerpt}`);
+      lines.push(`- ${n.noteDate ?? n.title}: ${n.content}`);
     }
   }
 
@@ -288,6 +288,7 @@ export type TelegramChatContext = {
   recentNotes: { category: string; content: string }[];
   recentThoughts: { content: string }[];
   openBeliefs: { text: string; reframe: string | null }[];
+  contextNotes: { title: string; noteDate: string | null; content: string }[];
 };
 
 /** Prompt pre voľný chat s mentorom cez Telegram (široký LifeOS kontext). */
@@ -409,6 +410,15 @@ export function buildTelegramChatPrompt(ctx: TelegramChatContext): string {
     lines.push(`Najnovšie poznámky: ${text}.`);
   } else {
     lines.push("Najnovšie poznámky: žiadne.");
+  }
+
+  if (ctx.contextNotes.length > 0) {
+    lines.push(
+      `Poznámky z Obsidianu (celý dostupný kontext, ${ctx.contextNotes.length} poznámok od najnovšej - novšie ber ako aktuálnejšie):`,
+    );
+    for (const n of ctx.contextNotes) {
+      lines.push(`- ${n.noteDate ?? n.title}: ${n.content}`);
+    }
   }
 
   lines.push("", `Správa od človeka: ${ctx.userMessage}`);

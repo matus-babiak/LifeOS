@@ -181,7 +181,7 @@ export async function getMentorMessage(
     days: 14,
   }));
 
-  const contextNotes = await getRecentContextForMentor(5);
+  const contextNotes = await getContextForMentor();
 
   const prompt = buildMentorPrompt({
     energy: view.checkin?.energy ?? null,
@@ -699,8 +699,12 @@ export async function getContextView() {
   };
 }
 
-/** Najnovšie kontextové poznámky (podľa dátumu v názve) ako palivo pre AI mentora. */
-export async function getRecentContextForMentor(limit = 5) {
+/**
+ * Celý kontext z Obsidianu ako palivo pre AI mentora, od najnovšej poznámky.
+ * Poistka charBudget zastaví načítavanie, keby vault narástol do extrémov
+ * (pri súčasnom objeme sa zmestí úplne všetko).
+ */
+export async function getContextForMentor(charBudget = 400_000) {
   const rows = await db
     .select({
       title: contextDocuments.title,
@@ -711,12 +715,15 @@ export async function getRecentContextForMentor(limit = 5) {
     .orderBy(
       sql`${contextDocuments.noteDate} desc nulls last`,
       desc(contextDocuments.syncedAt),
-    )
-    .limit(limit);
+    );
 
-  return rows.map((r) => ({
-    title: r.title,
-    noteDate: r.noteDate,
-    excerpt: r.content.replace(/\s+/g, " ").trim().slice(0, 400),
-  }));
+  const out: { title: string; noteDate: string | null; content: string }[] = [];
+  let used = 0;
+  for (const r of rows) {
+    const content = r.content.replace(/\s+/g, " ").trim();
+    if (used + content.length > charBudget && out.length > 0) break;
+    out.push({ title: r.title, noteDate: r.noteDate, content });
+    used += content.length;
+  }
+  return out;
 }

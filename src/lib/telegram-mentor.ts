@@ -13,6 +13,7 @@ import {
 } from "@/db/schema";
 import { todayISO } from "@/lib/dates";
 import { generateText } from "@/lib/gemini";
+import { getContextForMentor } from "@/db/queries";
 import { buildTelegramChatPrompt } from "@/lib/mentor";
 
 const JOURNAL_LIMIT = 5;
@@ -121,6 +122,8 @@ export async function replyAsTelegramMentor(
       .limit(BELIEFS_LIMIT),
   ]);
 
+  const contextNotes = await getContextForMentor();
+
   const prompt = buildTelegramChatPrompt({
     userMessage,
     recentJournal,
@@ -132,6 +135,7 @@ export async function replyAsTelegramMentor(
     recentNotes,
     recentThoughts,
     openBeliefs,
+    contextNotes,
   });
 
   const answer = await generateText(prompt);
