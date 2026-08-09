@@ -220,6 +220,21 @@ export const thoughts = pgTable("thoughts", {
     .defaultNow(),
 });
 
+// Kontextové dokumenty - poznámky z Obsidianu nahraté používateľom (palivo pre AI mentora).
+// noteDate sa parsuje z názvu súboru DD.MM.RRRR (denné poznámky), pre AI = signál čerstvosti.
+export const contextDocuments = pgTable("context_documents", {
+  id: serial("id").primaryKey(),
+  path: text("path").notNull().unique(),
+  folder: text("folder"),
+  title: text("title").notNull(),
+  content: text("content").notNull(),
+  noteDate: date("note_date"),
+  fileModifiedAt: timestamp("file_modified_at", { withTimezone: true }),
+  syncedAt: timestamp("synced_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+});
+
 // Vízia - "o 1 rok" / "o 5 rokov"
 export const visions = pgTable("visions", {
   id: serial("id").primaryKey(),

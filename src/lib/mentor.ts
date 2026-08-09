@@ -10,6 +10,7 @@ export type MentorContext = {
   habitConsistency: { name: string; done: number; days: number }[];
   recentJournal: { situation: string; principle: string | null }[];
   openBlocks: { title: string; body: string | null }[];
+  contextNotes: { title: string; noteDate: string | null; excerpt: string }[];
 };
 
 /** Zostaví prompt pre denného mentora z dát dňa aj širšieho kontextu (sezóna, história). */
@@ -50,6 +51,15 @@ export function buildMentorPrompt(ctx: MentorContext): string {
       .map((j) => j.principle ? `${j.situation} → princíp: ${j.principle}` : j.situation)
       .join("; ");
     lines.push(`Nedávne zápisy z denníka: ${text}.`);
+  }
+
+  if (ctx.contextNotes.length > 0) {
+    lines.push(
+      "Nedávne poznámky z Obsidianu (novšie = aktuálnejší kontext, uprednostni ich):",
+    );
+    for (const n of ctx.contextNotes) {
+      lines.push(`- ${n.noteDate ?? n.title}: ${n.excerpt}`);
+    }
   }
 
   if (ctx.energy != null) lines.push(`Dnešná energia: ${ctx.energy}/10.`);

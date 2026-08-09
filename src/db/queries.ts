@@ -5,6 +5,7 @@ import {
   activeBlocks,
   attentionItems,
   beliefs,
+  contextDocuments,
   dailyCheckins,
   focusItems,
   habitLogs,
@@ -180,6 +181,8 @@ export async function getMentorMessage(
     days: 14,
   }));
 
+  const contextNotes = await getRecentContextForMentor(5);
+
   const prompt = buildMentorPrompt({
     energy: view.checkin?.energy ?? null,
     identityFocus: view.checkin?.identityFocus ?? null,
@@ -192,6 +195,7 @@ export async function getMentorMessage(
     habitConsistency,
     recentJournal: journalRows.map((j) => ({ situation: j.situation, principle: j.principle })),
     openBlocks,
+    contextNotes,
   });
 
   const message = await generateText(prompt);
@@ -658,4 +662,61 @@ export async function getTolerancesView() {
   const done = all.filter((t) => t.doneAt);
 
   return { areas: areaList, untriaged, open, scheduled, done };
+}
+
+export type ContextDocument = typeof contextDocuments.$inferSelect;
+
+/** Prehľad nahratých kontextových dokumentov: počet, posledná synchronizácia, zoznam od najnovšieho. */
+export async function getContextView() {
+  const [stats] = await db
+    .select({
+      total: count(),
+      lastSynced: sql<string | null>`max(${contextDocuments.syncedAt})`,
+    })
+    .from(contextDocuments);
+
+  const docs = await db
+    .select({
+      id: contextDocuments.id,
+      path: contextDocuments.path,
+      folder: contextDocuments.folder,
+      title: contextDocuments.title,
+      noteDate: contextDocuments.noteDate,
+      syncedAt: contextDocuments.syncedAt,
+      length: sql<number>`length(${contextDocuments.content})`,
+    })
+    .from(contextDocuments)
+    .orderBy(
+      sql`${contextDocuments.noteDate} desc nulls last`,
+      desc(contextDocuments.syncedAt),
+    )
+    .limit(60);
+
+  return {
+    total: Number(stats?.total ?? 0),
+    lastSynced: stats?.lastSynced ?? null,
+    docs,
+  };
+}
+
+/** Najnovšie kontextové poznámky (podľa dátumu v názve) ako palivo pre AI mentora. */
+export async function getRecentContextForMentor(limit = 5) {
+  const rows = await db
+    .select({
+      title: contextDocuments.title,
+      noteDate: contextDocuments.noteDate,
+      content: contextDocuments.content,
+    })
+    .from(contextDocuments)
+    .orderBy(
+      sql`${contextDocuments.noteDate} desc nulls last`,
+      desc(contextDocuments.syncedAt),
+    )
+    .limit(limit);
+
+  return rows.map((r) => ({
+    title: r.title,
+    noteDate: r.noteDate,
+    excerpt: r.content.replace(/\s+/g, " ").trim().slice(0, 400),
+  }));
 }

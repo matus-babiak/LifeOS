@@ -17,6 +17,7 @@ import {
   Sparkles,
   Brain,
   BatteryLow,
+  FolderInput,
   Menu,
   X,
   Moon,
@@ -37,6 +38,7 @@ const NAV = [
   { href: "/poznamky", label: "Poznámky", icon: StickyNote },
   { href: "/myslienky", label: "Myšlienky", icon: Sparkles },
   { href: "/presvedcenia", label: "Presvedčenia", icon: Brain },
+  { href: "/kontext", label: "Kontext", icon: FolderInput },
 ];
 
 function LogoMark() {
