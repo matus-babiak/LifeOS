@@ -15,6 +15,7 @@ import { todayISO } from "@/lib/dates";
 import { generateText } from "@/lib/gemini";
 import { getContextForMentor } from "@/db/queries";
 import { buildTelegramChatPrompt } from "@/lib/mentor";
+import { stripOuterCodeFence } from "@/lib/telegram-format";
 
 const JOURNAL_LIMIT = 5;
 const TOLERANCE_LIMIT = 10;
@@ -140,9 +141,14 @@ export async function replyAsTelegramMentor(
 
   const answer = await generateText(prompt);
   if (!answer) {
-    return "Momentálne neviem odpovedať (AI nie je dostupná). Skús to o chvíľu znova.";
+    return [
+      "## ⚠️ Mentor nedostupný",
+      "",
+      "Momentálne neviem odpovedať (AI nie je dostupná). Skús to o chvíľu znova.",
+    ].join("\n");
   }
 
-  if (answer.length <= TELEGRAM_MAX_LEN) return answer;
-  return `${answer.slice(0, TELEGRAM_MAX_LEN - 1)}…`;
+  const cleaned = stripOuterCodeFence(answer);
+  if (cleaned.length <= TELEGRAM_MAX_LEN) return cleaned;
+  return `${cleaned.slice(0, TELEGRAM_MAX_LEN - 1)}…`;
 }

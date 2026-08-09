@@ -3,6 +3,7 @@ import { db } from "@/db";
 import { beliefs, journalEntries, thoughts } from "@/db/schema";
 import { generateText } from "@/lib/gemini";
 import { buildMorningInsightPrompt } from "@/lib/mentor";
+import { stripOuterCodeFence } from "@/lib/telegram-format";
 
 const JOURNAL_LIMIT = 5;
 const BELIEF_LIMIT = 8;
@@ -79,10 +80,11 @@ export async function generateMorningInsight(): Promise<{
     };
   }
 
+  const cleaned = stripOuterCodeFence(raw);
   const insight =
-    raw.length <= TELEGRAM_MAX_LEN
-      ? raw
-      : `${raw.slice(0, TELEGRAM_MAX_LEN - 1)}…`;
+    cleaned.length <= TELEGRAM_MAX_LEN
+      ? cleaned
+      : `${cleaned.slice(0, TELEGRAM_MAX_LEN - 1)}…`;
 
   return {
     insight,

@@ -291,14 +291,26 @@ export type TelegramChatContext = {
   contextNotes: { title: string; noteDate: string | null; content: string }[];
 };
 
+/** Inštrukcie formátu pre Telegram Rich Markdown (sendRichMessage). */
+const TELEGRAM_RICH_FORMAT_RULES = [
+  "Formátuj výstup pre Telegram Rich Markdown (nie klasický MarkdownV2, nie HTML):",
+  "- Nadpisy: # pre hlavný titulok (max 1), ## pre sekcie. Krátke, s 1 emoji.",
+  "- Tučné: **text** (nie *text* na tučné). Kurzívu použi zriedka: _text_.",
+  "- Zoznamy: - položka. Kód len v `backticks` ak treba.",
+  "- Pridaj 2-4 zmysluplné emoji (nadpisy / kľúčové body), nie spam na každý riadok.",
+  "- Žiadne HTML tagy, žiadny ``` code fence okolo celej odpovede, žiadne úvodzovky okolo celej odpovede.",
+].join("\n");
+
 /** Prompt pre voľný chat s mentorom cez Telegram (široký LifeOS kontext). */
 export function buildTelegramChatPrompt(ctx: TelegramChatContext): string {
   const lines: string[] = [
     "Si prísny, vecný a priamy osobný mentor v aplikácii LifeOS.",
-    "Odpovedaj v slovenčine, 2-8 viet. Žiadny pozdrav, žiadne prázdne motivačné frázy, žiadne úvodzovky okolo celej odpovede.",
+    "Odpovedaj v slovenčine. Žiadny pozdrav, žiadne prázdne motivačné frázy.",
+    "Dĺžka: typicky 4-12 riadkov. Pri komplexnejšej téme môžeš použiť krátke sekcie s ##.",
     "Kontext nižšie je odrazový mostík, nie skript. Primárne odpovedz na aktuálnu otázku / správu užívateľa.",
     "Neopakuj stále tú istú šablónu (vzorec → lekcia → otázka). Prispôsob formu otázke: ak chce krok, daj konkrétny krok; ak chce zrkadlo, pomenuj vzorec; ak sa pýta priamo, odpovedz priamo.",
     "Buď konkrétny a praktický. Ak kontext nestačí, povedz to a spýtaj sa na chýbajúce.",
+    TELEGRAM_RICH_FORMAT_RULES,
     "",
   ];
 
@@ -444,9 +456,15 @@ export function buildMorningInsightPrompt(ctx: MorningInsightContext): string {
     "Si prísny, vecný a priamy osobný mentor v aplikácii LifeOS.",
     "Analyzuj posledné zápisy a presvedčenia užívateľa.",
     "Identifikuj 1 kľúčový mentálny blok / problém, ktorý v živote práve rieši a na ktorý by sa mal dnes pozrieť.",
-    "Formuluj to ostro, vecne a priamo. 2-5 viet v slovenčine.",
-    "Bez pozdravu, bez oslovenia, bez prázdnych motivačných fráz, bez úvodzoviek okolo celej odpovede.",
+    "Formuluj to ostro, vecne a priamo v slovenčine.",
+    "Štruktúra správy:",
+    "1) # ☀️ Ranný fokus (alebo podobný krátky H1 s emoji)",
+    "2) ## s názvom bloku / vzorca (1 riadok)",
+    "3) 2-4 vety vysvetlenia, kľúčové slová **tučne**",
+    "4) voliteľne ## 🎯 Dnes s jednou ostrou otázkou alebo konkrétnym krokom",
+    "Bez pozdravu, bez oslovenia, bez prázdnych motivačných fráz.",
     "Ak dáta nestačia na jasný blok, pomenuj najväčší vzorec, ktorý z toho ide vyčítať, a daj jednu ostrú otázku na dnes.",
+    TELEGRAM_RICH_FORMAT_RULES,
     "",
   ];
 

@@ -1,7 +1,16 @@
 /**
  * Tenký klient Telegram Bot API.
  * Env: TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID, TELEGRAM_WEBHOOK_SECRET (voliteľné).
+ *
+ * Formátovanie: predvolene Rich Markdown (sendRichMessage) s H1/H2, **tučným**,
+ * zoznamami. Pri zlyhaní fallback na klasický HTML parse_mode.
  */
+
+import {
+  formatSystemNotice,
+  markdownToTelegramHtml,
+  stripOuterCodeFence,
+} from "@/lib/telegram-format";
 
 const API = "https://api.telegram.org";
 
@@ -9,6 +18,8 @@ export type InlineButton = {
   text: string;
   callback_data: string;
 };
+
+export type TelegramTextFormat = "rich" | "html" | "plain";
 
 function token(): string | null {
   return process.env.TELEGRAM_BOT_TOKEN?.trim() || null;
@@ -65,24 +76,14 @@ async function callApi(
   }
 }
 
-export async function sendTelegramMessage(
-  text: string,
+function attachReplyOptions(
+  body: Record<string, unknown>,
   options?: {
-    chatId?: string | number;
     replyMarkup?: { inline_keyboard: InlineButton[][] };
     replyToMessageId?: number;
     forceReply?: boolean;
   },
-): Promise<boolean> {
-  const chatId = options?.chatId ?? telegramChatId();
-  if (!chatId) return false;
-
-  const body: Record<string, unknown> = {
-    chat_id: chatId,
-    text,
-    disable_web_page_preview: true,
-  };
-
+) {
   if (options?.replyMarkup) {
     body.reply_markup = options.replyMarkup;
   } else if (options?.forceReply) {
@@ -93,10 +94,97 @@ export async function sendTelegramMessage(
   }
 
   if (options?.replyToMessageId != null) {
-    body.reply_to_message_id = options.replyToMessageId;
+    body.reply_parameters = { message_id: options.replyToMessageId };
+  }
+}
+
+async function sendClassicMessage(
+  chatId: string | number,
+  text: string,
+  options?: {
+    replyMarkup?: { inline_keyboard: InlineButton[][] };
+    replyToMessageId?: number;
+    forceReply?: boolean;
+    parseMode?: "HTML" | "MarkdownV2";
+  },
+): Promise<boolean> {
+  const body: Record<string, unknown> = {
+    chat_id: chatId,
+    text,
+    link_preview_options: { is_disabled: true },
+  };
+  if (options?.parseMode) {
+    body.parse_mode = options.parseMode;
+  }
+  attachReplyOptions(body, options);
+  return callApi("sendMessage", body);
+}
+
+async function sendRichMarkdownMessage(
+  chatId: string | number,
+  markdown: string,
+  options?: {
+    replyMarkup?: { inline_keyboard: InlineButton[][] };
+    replyToMessageId?: number;
+    forceReply?: boolean;
+  },
+): Promise<boolean> {
+  const body: Record<string, unknown> = {
+    chat_id: chatId,
+    rich_message: {
+      markdown: stripOuterCodeFence(markdown),
+    },
+  };
+  attachReplyOptions(body, options);
+  return callApi("sendRichMessage", body);
+}
+
+/**
+ * Pošle správu. Predvolene Rich Markdown (nadpisy, tučné, zoznamy).
+ * format: "html" = klasický HTML, "plain" = bez parse_mode (napr. BLK markery).
+ */
+export async function sendTelegramMessage(
+  text: string,
+  options?: {
+    chatId?: string | number;
+    replyMarkup?: { inline_keyboard: InlineButton[][] };
+    replyToMessageId?: number;
+    forceReply?: boolean;
+    format?: TelegramTextFormat;
+  },
+): Promise<boolean> {
+  const chatId = options?.chatId ?? telegramChatId();
+  if (!chatId) return false;
+
+  const format = options?.format ?? "rich";
+  const replyOpts = {
+    replyMarkup: options?.replyMarkup,
+    replyToMessageId: options?.replyToMessageId,
+    forceReply: options?.forceReply,
+  };
+
+  if (format === "plain") {
+    return sendClassicMessage(chatId, text, replyOpts);
   }
 
-  return callApi("sendMessage", body);
+  if (format === "html") {
+    return sendClassicMessage(chatId, text, {
+      ...replyOpts,
+      parseMode: "HTML",
+    });
+  }
+
+  // rich: najprv sendRichMessage, pri zlyhaní HTML fallback
+  const richOk = await sendRichMarkdownMessage(chatId, text, replyOpts);
+  if (richOk) return true;
+
+  console.warn(
+    "Telegram sendRichMessage zlyhalo, skúšam HTML fallback (sendMessage).",
+  );
+  return sendClassicMessage(chatId, markdownToTelegramHtml(text), {
+    ...replyOpts,
+    parseMode: "HTML",
+  });
 }
 
 export async function answerCallbackQuery(
@@ -167,24 +255,41 @@ export function formatBlockReminder(block: {
 }): string {
   const sev =
     block.severity === 1
-      ? "vysoká"
+      ? "🔴 vysoká"
       : block.severity === 2
-        ? "stredná"
+        ? "🟡 stredná"
         : block.severity === 3
-          ? "nízka"
+          ? "🟢 nízka"
           : null;
 
   const lines = [
-    "Ranné pripomenutie: aktívny blok",
+    "# 🧱 Aktívny blok",
     "",
-    block.title,
+    `## ${block.title}`,
   ];
   if (block.body) {
     lines.push("", block.body);
   }
-  if (sev) lines.push("", `Priorita: ${sev}`);
-  lines.push(`Pripomenutí: ${block.reminderCount + 1}`);
-  // Marker: odpoveď na túto správu uloží poznámku (aj bez tlačidla Dopísať)
+  if (sev) lines.push("", `**Priorita:** ${sev}`);
+  lines.push(`**Pripomenutí:** ${block.reminderCount + 1}`);
+  // Marker: odpoveď na túto správu uloží poznámku (aj bez tlačidla Dopísať).
+  // V plain formáte, aby reply_to_message.text obsahoval BLK:id.
   lines.push("", notePromptMarker(block.id));
   return lines.join("\n");
+}
+
+/** Potvrdenie uzavretia bloku (Rich Markdown). */
+export function formatBlockClosedMessage(title: string): string {
+  return formatSystemNotice("Hotovo", `„${title}“ je vyriešený.`, "✅");
+}
+
+/** Výzva na poznámku k bloku. Marker musí byť čitateľný v reply texte. */
+export function formatNotePromptMessage(blockId: number): string {
+  return [
+    "## 💬 Dopíš poznámku",
+    "",
+    "Odpovedz na túto správu a poznámka sa uloží k bloku.",
+    "",
+    notePromptMarker(blockId),
+  ].join("\n");
 }

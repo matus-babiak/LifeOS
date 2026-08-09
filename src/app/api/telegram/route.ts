@@ -4,14 +4,16 @@ import { replyAsTelegramMentor } from "@/lib/telegram-mentor";
 import {
   answerCallbackQuery,
   editMessageReplyMarkup,
+  formatBlockClosedMessage,
+  formatNotePromptMessage,
   isAllowedChat,
-  notePromptMarker,
   parseBlockIdFromNotePrompt,
   parseCallbackData,
   sendTelegramMessage,
   telegramConfigured,
   verifyTelegramSecret,
 } from "@/lib/telegram";
+import { formatSystemNotice, markdownToTelegramHtml } from "@/lib/telegram-format";
 
 export const runtime = "nodejs";
 
@@ -20,6 +22,7 @@ type TelegramMessage = {
   message_id: number;
   chat: TelegramChat;
   text?: string;
+  rich_message?: { blocks?: unknown[] };
   reply_to_message?: TelegramMessage;
 };
 type TelegramCallbackQuery = {
@@ -38,6 +41,31 @@ function unauthorized() {
 
 function ok() {
   return Response.json({ ok: true });
+}
+
+/** Plain text zo správy (klasický text alebo hrubý dump rich blocks). */
+function messagePlainText(message: TelegramMessage | undefined): string {
+  if (!message) return "";
+  if (message.text) return message.text;
+  if (!message.rich_message?.blocks) return "";
+  return extractPlainFromUnknown(message.rich_message.blocks);
+}
+
+function extractPlainFromUnknown(value: unknown): string {
+  if (typeof value === "string") return value;
+  if (Array.isArray(value)) {
+    return value.map(extractPlainFromUnknown).filter(Boolean).join("\n");
+  }
+  if (value && typeof value === "object") {
+    const obj = value as Record<string, unknown>;
+    const parts: string[] = [];
+    if ("text" in obj) parts.push(extractPlainFromUnknown(obj.text));
+    if ("blocks" in obj) parts.push(extractPlainFromUnknown(obj.blocks));
+    if ("items" in obj) parts.push(extractPlainFromUnknown(obj.items));
+    if ("content" in obj) parts.push(extractPlainFromUnknown(obj.content));
+    return parts.filter(Boolean).join("\n");
+  }
+  return "";
 }
 
 export async function POST(req: Request) {
@@ -66,7 +94,7 @@ export async function POST(req: Request) {
     return ok();
   }
 
-  if (update.message?.text) {
+  if (update.message && (update.message.text || update.message.rich_message)) {
     await handleMessage(update.message);
     return ok();
   }
@@ -95,7 +123,7 @@ async function handleCallback(query: TelegramCallbackQuery) {
     );
     if (closed && query.message) {
       await editMessageReplyMarkup(chatId, query.message.message_id);
-      await sendTelegramMessage(`Hotovo: „${closed.title}“ je vyriešený.`, {
+      await sendTelegramMessage(formatBlockClosedMessage(closed.title), {
         chatId,
       });
       revalidatePath("/");
@@ -104,9 +132,14 @@ async function handleCallback(query: TelegramCallbackQuery) {
   }
 
   await answerCallbackQuery(query.id, "Napíš poznámku ako odpoveď.");
+  // Klasický HTML: reply_to_message.text spoľahlivo obsahuje BLK:id marker
   await sendTelegramMessage(
-    `Napíš poznámku k bloku (odpovedz na túto správu).\n${notePromptMarker(parsed.blockId)}`,
-    { chatId, forceReply: true },
+    markdownToTelegramHtml(formatNotePromptMessage(parsed.blockId)),
+    {
+      chatId,
+      forceReply: true,
+      format: "html",
+    },
   );
 }
 
@@ -119,20 +152,30 @@ async function handleMessage(message: TelegramMessage) {
   const chatId = message.chat.id;
 
   // 1) Odpoveď na BLK:id → poznámka k aktívnemu bloku (nie chat)
-  const replied = message.reply_to_message?.text;
-  if (replied) {
-    const blockId = parseBlockIdFromNotePrompt(replied);
+  const repliedText = messagePlainText(message.reply_to_message);
+  if (repliedText) {
+    const blockId = parseBlockIdFromNotePrompt(repliedText);
     if (blockId != null) {
       const updated = await appendBlockNote(blockId, text);
       if (!updated) {
-        await sendTelegramMessage("Blok sa nenašiel alebo už je uzavretý.", {
-          chatId,
-        });
+        await sendTelegramMessage(
+          formatSystemNotice(
+            "Blok nenájdený",
+            "Blok sa nenašiel alebo už je uzavretý.",
+            "⚠️",
+          ),
+          { chatId },
+        );
         return;
       }
-      await sendTelegramMessage(`Poznámka uložená k „${updated.title}“.`, {
-        chatId,
-      });
+      await sendTelegramMessage(
+        formatSystemNotice(
+          "Poznámka uložená",
+          `K bloku „${updated.title}“.`,
+          "📝",
+        ),
+        { chatId },
+      );
       revalidatePath("/");
       return;
     }
@@ -141,7 +184,13 @@ async function handleMessage(message: TelegramMessage) {
   // 2) Bežná správa → chat s AI mentorom
   if (text === "/start") {
     await sendTelegramMessage(
-      "LifeOS mentor je tu. Napíš, čo ťa tlačí, alebo počkaj na ranné pripomenutie aktívneho bloku.",
+      [
+        "# 🧭 LifeOS mentor",
+        "",
+        "Napíš, čo ťa tlačí, alebo počkaj na **ranný fokus**.",
+        "",
+        "Odpovede sú formátované s nadpismi a tučným textom priamo v Telegrame.",
+      ].join("\n"),
       { chatId },
     );
     return;

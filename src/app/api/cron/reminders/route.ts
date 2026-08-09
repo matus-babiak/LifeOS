@@ -1,5 +1,6 @@
 import { generateMorningInsight } from "@/lib/morning-insight";
 import { sendTelegramMessage, telegramConfigured } from "@/lib/telegram";
+import { formatMorningInsightMessage } from "@/lib/telegram-format";
 
 export const runtime = "nodejs";
 
@@ -46,7 +47,7 @@ export async function GET(req: Request) {
     });
   }
 
-  const message = `Ranný fokus\n\n${result.insight}`;
+  const message = formatMorningInsightMessage(result.insight);
   const sent = await sendTelegramMessage(message);
 
   if (!sent) {
