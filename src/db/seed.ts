@@ -1,3 +1,4 @@
+import { sql } from "drizzle-orm";
 import { db } from "./index";
 import { areas } from "./schema";
 
@@ -53,10 +54,33 @@ const DEFAULT_AREAS = [
 ];
 
 let seeded = false;
+let schemaReady = false;
+
+/**
+ * Doplní schému, ak build-time drizzle push nesiahol na produkčný Neon.
+ * Vytvorí `goals`, odstráni zastaranú `seasons` (schválené).
+ */
+export async function ensureSchema() {
+  if (schemaReady) return;
+  await db.execute(sql`
+    CREATE TABLE IF NOT EXISTS goals (
+      id serial PRIMARY KEY,
+      area_id integer NOT NULL REFERENCES areas(id),
+      title text NOT NULL,
+      due_date date NOT NULL,
+      done_at timestamp with time zone,
+      created_at timestamp with time zone NOT NULL DEFAULT now(),
+      updated_at timestamp with time zone NOT NULL DEFAULT now()
+    )
+  `);
+  await db.execute(sql`DROP TABLE IF EXISTS seasons`);
+  schemaReady = true;
+}
 
 /** Pri prvom spustení naplní 6 oblastí života. Bezpečné volať opakovane. */
 export async function ensureSeeded() {
   if (seeded) return;
+  await ensureSchema();
   const existing = await db.select({ id: areas.id }).from(areas).limit(1);
   if (existing.length === 0) {
     await db.insert(areas).values(DEFAULT_AREAS).onConflictDoNothing();

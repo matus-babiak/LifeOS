@@ -112,7 +112,7 @@ export default async function VisionPage({
                   areaId: g.areaId,
                   title: g.title,
                   dueDate: g.dueDate,
-                  doneAt: g.doneAt,
+                  doneAt: g.doneAt ? g.doneAt.toISOString() : null,
                   areaName: g.areaName,
                   areaColor: g.areaColor,
                 }}
@@ -135,7 +135,7 @@ export default async function VisionPage({
                   areaId: g.areaId,
                   title: g.title,
                   dueDate: g.dueDate,
-                  doneAt: g.doneAt,
+                  doneAt: g.doneAt ? g.doneAt.toISOString() : null,
                   areaName: g.areaName,
                   areaColor: g.areaColor,
                 }}

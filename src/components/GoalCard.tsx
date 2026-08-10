@@ -14,7 +14,7 @@ export type GoalCardData = {
   areaId: number;
   title: string;
   dueDate: string;
-  doneAt: Date | null;
+  doneAt: string | null;
   areaName: string;
   areaColor: string;
 };
