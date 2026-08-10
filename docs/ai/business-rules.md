@@ -27,9 +27,10 @@ schválenia používateľa (a aktualizácie tohto dokumentu).
    - Otvorené = `closed_at IS NULL`.
    - Uzavretie len explicitnou akciou (UI alebo Telegram callback).
 
-6. **Max 1 aktívna sezóna**
-   - `createSeason` len ak žiadna active.
-   - Dĺžka: start + 83 dní (12 týždňov).
+6. **Ciele majú oblasť a termín**
+   - `areaId` povinné (existujúca oblasť života).
+   - `dueDate` povinné (ISO dátum).
+   - `doneAt` null = otvorený; nastavené = dosiahnutý.
 
 7. **Cron a Telegram security**
    - Cron: Bearer `CRON_SECRET`.

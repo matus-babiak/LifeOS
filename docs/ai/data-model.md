@@ -7,10 +7,10 @@ nie náhrada schémy. Pri zmene modelu vždy uprav aj túto stránku.
 
 ```
 Vízia (1y / 5y)
-  └─ Sezóna (12 týždňov, max 1 active)
-      └─ Tréning (area, level 1-5, status)
-          ├─ Míľniky (per level)
-          └─ Návyky (voliteľne viazané na tréning)
+Ciele (area + dueDate, doneAt = dosiahnuté)
+Tréning (area, level 1-5, status)
+  ├─ Míľniky (per level)
+  └─ Návyky (voliteľne viazané na tréning)
 ```
 
 Ďalšie paralelné entity: check-iny, fokus, denník, tolerancie, týždenné review,
@@ -29,7 +29,7 @@ poznámky, myšlienky, presvedčenia, pozornosť, aktívne bloky, context dokume
 | Tabuľka | Účel | Kľúčové polia |
 |---|---|---|
 | `areas` | 6 oblastí života (seed) | slug, name, color, icon, position |
-| `seasons` | 12-týždňová fáza | start/end, active, retrospective |
+| `goals` | Ciele podľa oblasti | areaId, title, dueDate, doneAt |
 | `trainings` | Identitný tréning | areaId, level, dailyStep, status, mentorNote* |
 | `milestones` | Míľniky úrovne | trainingId, level, done |
 | `habits` | Návyky | targetDays, frequency, status, identity |

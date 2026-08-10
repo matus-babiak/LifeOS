@@ -20,7 +20,7 @@ Nie je to klasický todo-list. Funkcie majú posilňovať prácu na identite
 
 ## Aký problém rieši
 
-Pomáha denne a týždenne udržiavať spojenie medzi víziou, tréningami, návykmi,
+Pomáha denne a týždenne udržiavať spojenie medzi víziou, cieľmi, tréningami, návykmi,
 reflexiou a pretrvávajúcimi mentálnymi blokmi. Rieši aj zlyhanie „prázdnej stránky"
 pri týždennej reflexii: appka pripraví súhrn z denných dát.
 
@@ -70,7 +70,7 @@ Každý deň vedieť:
 
 ## Hlavné obrazovky (nav)
 
-Dnes, Tréningy, Návyky, Tolerancie, Denník, Týždeň, Vízia, Pozornosť,
+Dnes, Tréningy, Návyky, Tolerancie, Denník, Týždeň, Vízia a ciele, Pozornosť,
 Oblasti, Poznámky, Myšlienky, Presvedčenia, Kontext.
 
 Plus: `/login`, `/ikona` (verejná), `/treningy/[id]`.
@@ -81,7 +81,7 @@ V kóde je hotové viac než pôvodný PRODUCT.md predpokladal:
 
 - Denný check-in, fokus, návyky
 - Tréningy + míľniky
-- Denník, týždeň, vízia, sezóna
+- Denník, týždeň, vízia a ciele (bez sezón)
 - Oblasti + markdown export
 - Tolerancie, pozornosť, poznámky, myšlienky, presvedčenia
 - Aktívne bloky

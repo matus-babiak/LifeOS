@@ -98,7 +98,7 @@ prípadne `npm run build` pri zmenách build/DB.
 | `/tolerancie` | QuickAdd, TriageCard, Schedule | tolerancie/actions | tolerances |
 | `/dennik` | NewJournalForm, JournalBlockCandidates | dennik/actions, mentor extract | journal_entries, active_blocks |
 | `/tyzden` | WeekReflection, WeeklyReviewForm | weekSummary, mentor | weekly_reviews, checkins… |
-| `/vizia` | VisionEditor, SeasonPanel | vizia/actions | visions, seasons |
+| `/vizia` | VisionEditor, NewGoalForm, GoalCard | vizia/actions | visions, goals, areas |
 | `/pozornost` | AttentionItemCard | pozornost/actions | attention_items |
 | `/oblasti` | export link | export.ts | areas + related |
 | `/poznamky` | NewNoteForm | notes.ts | notes |

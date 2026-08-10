@@ -3,8 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { eq } from "drizzle-orm";
 import { db } from "@/db";
-import { seasons, visions } from "@/db/schema";
-import { addDays, todayISO } from "@/lib/dates";
+import { goals, visions } from "@/db/schema";
 import { requireUser } from "@/lib/session";
 
 function text(formData: FormData, key: string): string | null {
@@ -12,6 +11,15 @@ function text(formData: FormData, key: string): string | null {
   if (typeof value !== "string") return null;
   const trimmed = value.trim();
   return trimmed.length > 0 ? trimmed : null;
+}
+
+function isoDate(formData: FormData, key: string): string | null {
+  const value = text(formData, key);
+  if (!value) return null;
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return null;
+  const d = new Date(`${value}T12:00:00Z`);
+  if (Number.isNaN(d.getTime())) return null;
+  return value;
 }
 
 export async function saveVision(horizon: "1y" | "5y", formData: FormData) {
@@ -29,36 +37,55 @@ export async function saveVision(horizon: "1y" | "5y", formData: FormData) {
   revalidatePath("/vizia");
 }
 
-export async function createSeason(formData: FormData) {
+export async function createGoal(formData: FormData) {
   await requireUser();
   const title = text(formData, "title");
-  if (!title) return;
+  const areaId = Number(formData.get("areaId"));
+  const dueDate = isoDate(formData, "dueDate");
+  if (!title || !Number.isInteger(areaId) || !dueDate) return;
 
-  const existing = await db
-    .select({ id: seasons.id })
-    .from(seasons)
-    .where(eq(seasons.active, true));
-  if (existing.length > 0) return; // najprv treba ukončiť bežiacu sezónu
-
-  const startDate = todayISO();
-  const endDate = addDays(startDate, 83); // 12 týždňov
-
-  await db.insert(seasons).values({
-    title,
-    intention: text(formData, "intention"),
-    startDate,
-    endDate,
-    active: true,
-  });
-
+  await db.insert(goals).values({ title, areaId, dueDate });
   revalidatePath("/vizia");
+  revalidatePath("/");
 }
 
-export async function endSeason(id: number, formData: FormData) {
+export async function updateGoal(id: number, formData: FormData) {
   await requireUser();
+  const title = text(formData, "title");
+  const areaId = Number(formData.get("areaId"));
+  const dueDate = isoDate(formData, "dueDate");
+  if (!title || !Number.isInteger(areaId) || !dueDate) return;
+
   await db
-    .update(seasons)
-    .set({ retrospective: text(formData, "retrospective"), active: false })
-    .where(eq(seasons.id, id));
+    .update(goals)
+    .set({ title, areaId, dueDate, updatedAt: new Date() })
+    .where(eq(goals.id, id));
   revalidatePath("/vizia");
+  revalidatePath("/");
+}
+
+export async function deleteGoal(id: number) {
+  await requireUser();
+  await db.delete(goals).where(eq(goals.id, id));
+  revalidatePath("/vizia");
+  revalidatePath("/");
+}
+
+export async function toggleGoalDone(id: number) {
+  await requireUser();
+  const [row] = await db
+    .select({ doneAt: goals.doneAt })
+    .from(goals)
+    .where(eq(goals.id, id));
+  if (!row) return;
+
+  await db
+    .update(goals)
+    .set({
+      doneAt: row.doneAt ? null : new Date(),
+      updatedAt: new Date(),
+    })
+    .where(eq(goals.id, id));
+  revalidatePath("/vizia");
+  revalidatePath("/");
 }

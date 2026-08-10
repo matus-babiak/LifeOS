@@ -12,7 +12,7 @@ Definovaná v `src/components/AppShell.tsx`:
 4. Tolerancie `/tolerancie`
 5. Denník `/dennik`
 6. Týždeň `/tyzden`
-7. Vízia `/vizia`
+7. Vízia a ciele `/vizia`
 8. Pozornosť `/pozornost`
 9. Oblasti `/oblasti`
 10. Poznámky `/poznamky`
@@ -37,6 +37,12 @@ Brand: „LifeOS" + logo mark.
 - Pred 18:00: „Dobré ráno", ranný check-in ak nie je hotový
 - Od 18:00: „Dobrý večer", večerná reflexia
 - Sekcie: aktívne bloky, tolerancie quick-add, mentor, check-in, fokus, návyky, večer
+
+## Vízia a ciele
+
+- Dlhodobá vízia: O 1 rok, O 5 rokov
+- Ciele: pri vytvorení výber oblasti + termín; filter podľa oblasti; editácia, zmazanie, dosiahnuté
+- Sezóny už nie sú súčasťou UI
 
 ## Friction budget
 

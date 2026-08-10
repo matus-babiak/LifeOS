@@ -32,7 +32,7 @@ const NAV = [
   { href: "/tolerancie", label: "Tolerancie", icon: BatteryLow },
   { href: "/dennik", label: "Denník", icon: NotebookPen },
   { href: "/tyzden", label: "Týždeň", icon: CalendarRange },
-  { href: "/vizia", label: "Vízia", icon: Compass },
+  { href: "/vizia", label: "Vízia a ciele", icon: Compass },
   { href: "/pozornost", label: "Pozornosť", icon: ArrowLeftRight },
   { href: "/oblasti", label: "Oblasti", icon: LayoutGrid },
   { href: "/poznamky", label: "Poznámky", icon: StickyNote },

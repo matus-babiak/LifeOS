@@ -50,15 +50,21 @@ export const areas = pgTable("areas", {
   position: integer("position").notNull().default(0),
 });
 
-// Fáza života - 12-týždňová sezóna s retrospektívou na konci
-export const seasons = pgTable("seasons", {
+// Ciele - veci, ktoré chcem zmeniť, priradené k oblasti života
+export const goals = pgTable("goals", {
   id: serial("id").primaryKey(),
+  areaId: integer("area_id")
+    .notNull()
+    .references(() => areas.id),
   title: text("title").notNull(),
-  intention: text("intention"),
-  startDate: date("start_date").notNull(),
-  endDate: date("end_date").notNull(),
-  retrospective: text("retrospective"),
-  active: boolean("active").notNull().default(true),
+  dueDate: date("due_date").notNull(),
+  doneAt: timestamp("done_at", { withTimezone: true }),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
 });
 
 // Tréning - 1 až 3 aktívne naraz, úroveň 1-5 s míľnikmi
@@ -286,6 +292,11 @@ export const areasRelations = relations(areas, ({ many }) => ({
   trainings: many(trainings),
   tolerances: many(tolerances),
   attentionItems: many(attentionItems),
+  goals: many(goals),
+}));
+
+export const goalsRelations = relations(goals, ({ one }) => ({
+  area: one(areas, { fields: [goals.areaId], references: [areas.id] }),
 }));
 
 export const tolerancesRelations = relations(tolerances, ({ one }) => ({

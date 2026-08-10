@@ -8,12 +8,12 @@ import {
   contextDocuments,
   dailyCheckins,
   focusItems,
+  goals,
   habitLogs,
   habits,
   journalEntries,
   milestones,
   notes,
-  seasons,
   thoughts,
   tolerances,
   trainings,
@@ -142,9 +142,19 @@ export async function getMentorMessage(
   const habitIds = view.habits.map((h) => h.id);
   const twoWeeksAgo = addDays(view.today, -13);
 
-  const [[activeSeason], [lastWeekReview], twoWeekLogs, journalRows, openBlocks] =
+  const [openGoals, [lastWeekReview], twoWeekLogs, journalRows, openBlocks] =
     await Promise.all([
-      db.select().from(seasons).where(eq(seasons.active, true)),
+      db
+        .select({
+          title: goals.title,
+          dueDate: goals.dueDate,
+          areaName: areas.name,
+        })
+        .from(goals)
+        .innerJoin(areas, eq(goals.areaId, areas.id))
+        .where(isNull(goals.doneAt))
+        .orderBy(asc(goals.dueDate))
+        .limit(12),
       db
         .select()
         .from(weeklyReviews)
@@ -188,7 +198,11 @@ export async function getMentorMessage(
     identityFocus: view.checkin?.identityFocus ?? null,
     dueHabits,
     trainingSteps,
-    season: activeSeason ? { title: activeSeason.title, intention: activeSeason.intention } : null,
+    goals: openGoals.map((g) => ({
+      title: g.title,
+      areaName: g.areaName,
+      dueDate: g.dueDate,
+    })),
     lastWeekReview: lastWeekReview
       ? { win: lastWeekReview.win, pattern: lastWeekReview.pattern, change: lastWeekReview.change }
       : null,
@@ -417,18 +431,33 @@ export async function getJournalView() {
   return { entries, trainingName, trainings: activeTrainings };
 }
 
-export type Season = typeof seasons.$inferSelect;
+export type GoalRow = typeof goals.$inferSelect;
 
-/** Vízia (o 1 rok / o 5 rokov) a aktuálna sezóna + história pre stránku Vízia. */
+/** Vízia (o 1 rok / o 5 rokov), ciele s oblasťami a zoznam oblastí pre formulár. */
 export async function getVisionView() {
-  const [rows, [activeSeason], pastSeasons] = await Promise.all([
+  const [visionRows, goalRows, areaList] = await Promise.all([
     db.select().from(visions),
-    db.select().from(seasons).where(eq(seasons.active, true)),
-    db.select().from(seasons).where(eq(seasons.active, false)).orderBy(desc(seasons.endDate)),
+    db
+      .select({
+        id: goals.id,
+        areaId: goals.areaId,
+        title: goals.title,
+        dueDate: goals.dueDate,
+        doneAt: goals.doneAt,
+        createdAt: goals.createdAt,
+        updatedAt: goals.updatedAt,
+        areaName: areas.name,
+        areaSlug: areas.slug,
+        areaColor: areas.color,
+      })
+      .from(goals)
+      .innerJoin(areas, eq(goals.areaId, areas.id))
+      .orderBy(asc(goals.dueDate), desc(goals.createdAt)),
+    db.select().from(areas).orderBy(asc(areas.position)),
   ]);
-  const contentByHorizon = new Map(rows.map((v) => [v.horizon, v.content]));
+  const contentByHorizon = new Map(visionRows.map((v) => [v.horizon, v.content]));
 
-  return { contentByHorizon, activeSeason: activeSeason ?? null, pastSeasons };
+  return { contentByHorizon, goals: goalRows, areas: areaList };
 }
 
 /** Dáta pre jeden týždeň (pondelok-nedeľa): auto-súhrn z denných dát + prípadná uložená reflexia. */
