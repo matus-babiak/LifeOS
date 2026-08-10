@@ -1,4 +1,5 @@
 import { generateMorningInsight } from "@/lib/morning-insight";
+import { saveMessageKeyboard } from "@/lib/telegram-capture";
 import { sendTelegramMessage, telegramConfigured } from "@/lib/telegram";
 import { formatMorningInsightMessage } from "@/lib/telegram-format";
 
@@ -48,7 +49,9 @@ export async function GET(req: Request) {
   }
 
   const message = formatMorningInsightMessage(result.insight);
-  const sent = await sendTelegramMessage(message);
+  const sent = await sendTelegramMessage(message, {
+    replyMarkup: saveMessageKeyboard(),
+  });
 
   if (!sent) {
     return Response.json(

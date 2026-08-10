@@ -5,13 +5,21 @@ import {
   formatGoalAreaMessage,
   formatNewMenuMessage,
   formatNoteCategoryMessage,
+  formatSaveMenuMessage,
   goalAreaKeyboard,
   isNewCommand,
+  isUlozitCommand,
   newCaptureKeyboard,
   noteCategoryKeyboard,
   parseCaptureFromPrompt,
   parseNewCallbackData,
+  parseSaveCallbackData,
+  pathsForCapture,
   saveCaptureFromPrompt,
+  saveCaptureKeyboard,
+  saveMessageKeyboard,
+  type CapturePrompt,
+  type SaveCallback,
 } from "@/lib/telegram-capture";
 import { replyAsTelegramMentor } from "@/lib/telegram-mentor";
 import {
@@ -81,6 +89,25 @@ function extractPlainFromUnknown(value: unknown): string {
   return "";
 }
 
+async function commitCapture(prompt: CapturePrompt, text: string, chatId: number) {
+  const saved = await saveCaptureFromPrompt(prompt, text);
+  if (!saved.ok) {
+    await sendTelegramMessage(
+      formatSystemNotice(
+        "Neuložené",
+        "Text je prázdny alebo kategória/oblasť neplatí.",
+        "⚠️",
+      ),
+      { chatId },
+    );
+    return;
+  }
+  for (const path of pathsForCapture(saved.type)) {
+    revalidatePath(path);
+  }
+  await sendTelegramMessage(saved.notice, { chatId });
+}
+
 export async function POST(req: Request) {
   if (!telegramConfigured()) {
     return Response.json(
@@ -124,6 +151,12 @@ async function handleCallback(query: TelegramCallbackQuery) {
 
   const data = query.data ?? "";
 
+  const saveCb = parseSaveCallbackData(data);
+  if (saveCb) {
+    await handleSaveCallback(query, chatId, saveCb);
+    return;
+  }
+
   const newCb = parseNewCallbackData(data);
   if (newCb) {
     await handleNewCallback(query, chatId, newCb);
@@ -164,6 +197,89 @@ async function handleCallback(query: TelegramCallbackQuery) {
   );
 }
 
+/** Text zo správy, ktorú chceme uložiť (odpoveď na ňu v menu). */
+function saveSourceText(query: TelegramCallbackQuery): string {
+  return messagePlainText(query.message?.reply_to_message).trim();
+}
+
+function saveSourceMessageId(query: TelegramCallbackQuery): number | null {
+  const id = query.message?.reply_to_message?.message_id;
+  return id != null ? id : null;
+}
+
+async function handleSaveCallback(
+  query: TelegramCallbackQuery,
+  chatId: number,
+  saveCb: SaveCallback,
+) {
+  if (saveCb.action === "ask") {
+    const sourceId = query.message?.message_id;
+    if (sourceId == null) {
+      await answerCallbackQuery(query.id, "Správu sa nepodarilo nájsť.");
+      return;
+    }
+    await answerCallbackQuery(query.id, "Vyber, kam uložiť.");
+    await sendTelegramMessage(formatSaveMenuMessage(), {
+      chatId,
+      replyToMessageId: sourceId,
+      replyMarkup: saveCaptureKeyboard(),
+    });
+    return;
+  }
+
+  const sourceId = saveSourceMessageId(query);
+  const sourceText = saveSourceText(query);
+  if (!sourceId || !sourceText) {
+    await answerCallbackQuery(
+      query.id,
+      "Chýba pôvodná správa. Podrž ju, Odpovedať, /ulozit.",
+    );
+    return;
+  }
+
+  if (saveCb.action === "type") {
+    if (saveCb.type === "note") {
+      await answerCallbackQuery(query.id, "Vyber kategóriu.");
+      await sendTelegramMessage(formatNoteCategoryMessage(), {
+        chatId,
+        replyToMessageId: sourceId,
+        replyMarkup: await noteCategoryKeyboard("save"),
+      });
+      return;
+    }
+    if (saveCb.type === "goal") {
+      await answerCallbackQuery(query.id, "Vyber oblasť.");
+      await sendTelegramMessage(formatGoalAreaMessage(), {
+        chatId,
+        replyToMessageId: sourceId,
+        replyMarkup: await goalAreaKeyboard("save"),
+      });
+      return;
+    }
+
+    await answerCallbackQuery(query.id, "Ukladám…");
+    await commitCapture({ type: saveCb.type }, sourceText, chatId);
+    return;
+  }
+
+  if (saveCb.action === "note-category") {
+    await answerCallbackQuery(query.id, "Ukladám…");
+    await commitCapture(
+      { type: "note", category: saveCb.category },
+      sourceText,
+      chatId,
+    );
+    return;
+  }
+
+  await answerCallbackQuery(query.id, "Ukladám…");
+  await commitCapture(
+    { type: "goal", areaId: saveCb.areaId },
+    sourceText,
+    chatId,
+  );
+}
+
 async function handleNewCallback(
   query: TelegramCallbackQuery,
   chatId: number,
@@ -174,7 +290,7 @@ async function handleNewCallback(
       await answerCallbackQuery(query.id, "Vyber kategóriu.");
       await sendTelegramMessage(formatNoteCategoryMessage(), {
         chatId,
-        replyMarkup: await noteCategoryKeyboard(),
+        replyMarkup: await noteCategoryKeyboard("new"),
       });
       return;
     }
@@ -182,7 +298,7 @@ async function handleNewCallback(
       await answerCallbackQuery(query.id, "Vyber oblasť.");
       await sendTelegramMessage(formatGoalAreaMessage(), {
         chatId,
-        replyMarkup: await goalAreaKeyboard(),
+        replyMarkup: await goalAreaKeyboard("new"),
       });
       return;
     }
@@ -272,26 +388,7 @@ async function handleMessage(message: TelegramMessage) {
     // 2) Odpoveď na CAP:… → nový zápis (/new)
     const capture = parseCaptureFromPrompt(repliedText);
     if (capture) {
-      const saved = await saveCaptureFromPrompt(capture, text);
-      if (!saved.ok) {
-        await sendTelegramMessage(
-          formatSystemNotice(
-            "Neuložené",
-            "Text je prázdny alebo kategória/oblasť neplatí.",
-            "⚠️",
-          ),
-          { chatId },
-        );
-        return;
-      }
-      if (saved.type === "thought") revalidatePath("/myslienky");
-      else if (saved.type === "belief") revalidatePath("/presvedcenia");
-      else if (saved.type === "note") revalidatePath("/poznamky");
-      else {
-        revalidatePath("/vizia");
-        revalidatePath("/");
-      }
-      await sendTelegramMessage(saved.notice, { chatId });
+      await commitCapture(capture, text, chatId);
       return;
     }
   }
@@ -304,7 +401,9 @@ async function handleMessage(message: TelegramMessage) {
         "",
         "Napíš, čo ťa tlačí, alebo počkaj na **ranný fokus**.",
         "",
-        "Nový zápis: **/new** (myšlienka, poznámka, presvedčenie, cieľ).",
+        "Nový zápis: **/new**",
+        "Uložiť správu: podrž ju → Odpovedať → **/ulozit**",
+        "Alebo tlačidlo **Uložiť do LifeOS** pod odpoveďou bota.",
       ].join("\n"),
       { chatId },
     );
@@ -319,7 +418,32 @@ async function handleMessage(message: TelegramMessage) {
     return;
   }
 
+  if (isUlozitCommand(text)) {
+    const sourceId = message.reply_to_message?.message_id;
+    const sourceText = repliedText.trim();
+    if (!sourceId || !sourceText) {
+      await sendTelegramMessage(
+        formatSystemNotice(
+          "Ako uložiť správu",
+          "Podrž správu → Odpovedať → napíš /ulozit. Alebo použi tlačidlo Uložiť do LifeOS pod odpoveďou bota.",
+          "💡",
+        ),
+        { chatId },
+      );
+      return;
+    }
+    await sendTelegramMessage(formatSaveMenuMessage(), {
+      chatId,
+      replyToMessageId: sourceId,
+      replyMarkup: saveCaptureKeyboard(),
+    });
+    return;
+  }
+
   // 4) Bežná správa → chat s AI mentorom
   const answer = await replyAsTelegramMentor(text);
-  await sendTelegramMessage(answer, { chatId });
+  await sendTelegramMessage(answer, {
+    chatId,
+    replyMarkup: saveMessageKeyboard(),
+  });
 }

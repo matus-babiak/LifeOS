@@ -1,5 +1,5 @@
 /**
- * Telegram /new: rýchle pridanie myšlienky, poznámky, presvedčenia alebo cieľa.
+ * Telegram /new a /ulozit: pridanie zápisu alebo uloženie existujúcej správy.
  * Auth je chat allowlist + webhook secret (rovnako ako bloky), nie session cookie.
  */
 
@@ -26,6 +26,12 @@ export type NewCallback =
   | { action: "note-category"; category: string }
   | { action: "goal-area"; areaId: number };
 
+export type SaveCallback =
+  | { action: "ask" }
+  | { action: "type"; type: CaptureType }
+  | { action: "note-category"; category: string }
+  | { action: "goal-area"; areaId: number };
+
 export type SaveCaptureResult =
   | { ok: true; type: CaptureType; notice: string }
   | { ok: false };
@@ -37,18 +43,36 @@ const TYPE_LABEL: Record<CaptureType, string> = {
   goal: "cieľ",
 };
 
-/** Hlavné menu po /new. */
+/** Hlavné menu po /new (nový text). */
 export function newCaptureKeyboard() {
+  return typeChoiceKeyboard("new");
+}
+
+/** Menu po /ulozit alebo tlačidle Uložiť (text zo správy). */
+export function saveCaptureKeyboard() {
+  return typeChoiceKeyboard("save");
+}
+
+function typeChoiceKeyboard(prefix: "new" | "save") {
   return {
     inline_keyboard: [
       [
-        { text: "Myšlienka", callback_data: "new:thought" },
-        { text: "Poznámka", callback_data: "new:note" },
+        { text: "Myšlienka", callback_data: `${prefix}:thought` },
+        { text: "Poznámka", callback_data: `${prefix}:note` },
       ],
       [
-        { text: "Presvedčenie", callback_data: "new:belief" },
-        { text: "Cieľ", callback_data: "new:goal" },
+        { text: "Presvedčenie", callback_data: `${prefix}:belief` },
+        { text: "Cieľ", callback_data: `${prefix}:goal` },
       ],
+    ] satisfies InlineButton[][],
+  };
+}
+
+/** Tlačidlo pod odpoveďou mentora / ranným fokusom. */
+export function saveMessageKeyboard() {
+  return {
+    inline_keyboard: [
+      [{ text: "Uložiť do LifeOS", callback_data: "saveask" }],
     ] satisfies InlineButton[][],
   };
 }
@@ -61,6 +85,14 @@ export function formatNewMenuMessage(): string {
   ].join("\n");
 }
 
+export function formatSaveMenuMessage(): string {
+  return [
+    "## Uložiť správu",
+    "",
+    "Kam to dať v LifeOS?",
+  ].join("\n");
+}
+
 function chunkButtons(buttons: InlineButton[], size = 2): InlineButton[][] {
   const rows: InlineButton[][] = [];
   for (let i = 0; i < buttons.length; i += size) {
@@ -70,17 +102,17 @@ function chunkButtons(buttons: InlineButton[], size = 2): InlineButton[][] {
 }
 
 /** Menu kategórií poznámky (oblasti + LifeOS). */
-export async function noteCategoryKeyboard() {
+export async function noteCategoryKeyboard(prefix: "new" | "save" = "new") {
   const areaList = await getAreas();
   const areaButtons: InlineButton[] = areaList.map((area) => ({
     text: area.name,
-    callback_data: `new:note:${area.slug}`,
+    callback_data: `${prefix}:note:${area.slug}`,
   }));
   const buttons = chunkButtons(areaButtons);
   buttons.push([
     {
       text: LIFEOS_CATEGORY_LABEL,
-      callback_data: `new:note:${LIFEOS_CATEGORY}`,
+      callback_data: `${prefix}:note:${LIFEOS_CATEGORY}`,
     },
   ]);
   return { inline_keyboard: buttons };
@@ -95,11 +127,11 @@ export function formatNoteCategoryMessage(): string {
 }
 
 /** Menu oblastí pre cieľ. */
-export async function goalAreaKeyboard() {
+export async function goalAreaKeyboard(prefix: "new" | "save" = "new") {
   const areaList = await getAreas();
   const areaButtons: InlineButton[] = areaList.map((area) => ({
     text: area.name,
-    callback_data: `new:goal:${area.id}`,
+    callback_data: `${prefix}:goal:${area.id}`,
   }));
   return { inline_keyboard: chunkButtons(areaButtons) };
 }
@@ -171,6 +203,29 @@ export function parseNewCallbackData(data: string): NewCallback | null {
   return null;
 }
 
+export function parseSaveCallbackData(data: string): SaveCallback | null {
+  if (data === "saveask") return { action: "ask" };
+
+  const typeMatch = data.match(/^save:(thought|belief|note|goal)$/);
+  if (typeMatch) {
+    return { action: "type", type: typeMatch[1] as CaptureType };
+  }
+
+  const noteCat = data.match(/^save:note:([a-z0-9-]+)$/);
+  if (noteCat) {
+    return { action: "note-category", category: noteCat[1] };
+  }
+
+  const goalArea = data.match(/^save:goal:(\d+)$/);
+  if (goalArea) {
+    const areaId = Number(goalArea[1]);
+    if (!Number.isInteger(areaId) || areaId <= 0) return null;
+    return { action: "goal-area", areaId };
+  }
+
+  return null;
+}
+
 function isoDatePlusDays(days: number): string {
   const d = new Date();
   d.setUTCDate(d.getUTCDate() + days);
@@ -188,7 +243,7 @@ async function validAreaId(areaId: number): Promise<boolean> {
   return areaList.some((a) => a.id === areaId);
 }
 
-/** Uloží zápis podľa CAP výzvy. Bez session: volá sa z Telegram webhooku. */
+/** Uloží zápis podľa CAP výzvy alebo textu zo správy. Bez session. */
 export async function saveCaptureFromPrompt(
   prompt: CapturePrompt,
   rawText: string,
@@ -226,8 +281,9 @@ export async function saveCaptureFromPrompt(
 
   if (!(await validAreaId(prompt.areaId))) return { ok: false };
   const dueDate = isoDatePlusDays(30);
+  const title = text.split("\n").map((l) => l.trim()).find(Boolean) ?? text;
   await db.insert(goals).values({
-    title: text,
+    title: title.slice(0, 300),
     areaId: prompt.areaId,
     dueDate,
   });
@@ -242,6 +298,17 @@ export async function saveCaptureFromPrompt(
   };
 }
 
+export function pathsForCapture(type: CaptureType): readonly string[] {
+  if (type === "thought") return ["/myslienky"];
+  if (type === "belief") return ["/presvedcenia"];
+  if (type === "note") return ["/poznamky"];
+  return ["/vizia", "/"];
+}
+
 export function isNewCommand(text: string): boolean {
   return /^\/new(?:@\w+)?$/i.test(text.trim());
+}
+
+export function isUlozitCommand(text: string): boolean {
+  return /^\/ulozit(?:@\w+)?$/i.test(text.trim());
 }
