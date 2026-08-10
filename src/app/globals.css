@@ -55,6 +55,37 @@ body {
   background: var(--accent-soft);
 }
 
+/*
+ * iOS Safari renderuje input[type=date] natívne a často ignoruje Tailwind triedy
+ * (ine pozadie, ostré rohy, pretečenie šírky). Zjednotíme vzhľad s text/select.
+ */
+input[type="date"] {
+  -webkit-appearance: none;
+  appearance: none;
+  box-sizing: border-box;
+  max-width: 100%;
+  min-width: 0;
+  color: var(--ink);
+  background-color: var(--bg);
+  border-color: var(--line);
+  border-radius: 0.5rem;
+  color-scheme: light;
+}
+
+.dark input[type="date"] {
+  color-scheme: dark;
+}
+
+input[type="date"]::-webkit-date-and-time-value {
+  text-align: left;
+  margin: 0;
+}
+
+input[type="date"]::-webkit-calendar-picker-indicator {
+  opacity: 0.55;
+  cursor: pointer;
+}
+
 /* iOS Safari zoomuje stránku, keď má fokusnuté pole font-size pod 16px */
 @media (max-width: 767px) {
   input,

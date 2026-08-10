@@ -27,7 +27,7 @@ export default function ScheduleToleranceForm({ id }: { id: number }) {
         name="dueDate"
         type="date"
         required
-        className="rounded-lg border border-line bg-bg px-2.5 py-1.5 text-xs outline-none focus:border-accent"
+        className="min-w-0 w-full max-w-full rounded-lg border border-line bg-bg px-2.5 py-1.5 text-xs outline-none focus:border-accent sm:w-auto"
       />
       <input
         name="firstStep"

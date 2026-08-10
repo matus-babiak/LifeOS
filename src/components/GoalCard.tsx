@@ -80,7 +80,7 @@ export default function GoalCard({
               type="date"
               required
               defaultValue={goal.dueDate}
-              className="w-full rounded-lg border border-line bg-bg px-3 py-2 text-sm outline-none focus:border-accent"
+              className="min-w-0 w-full max-w-full rounded-lg border border-line bg-bg px-3 py-2 text-sm outline-none focus:border-accent"
             />
           </div>
           <div className="flex gap-2">

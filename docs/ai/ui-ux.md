@@ -55,6 +55,7 @@ Brand: „LifeOS" + logo mark.
 - Server actions cez `<form action={...}>`
 - Optimistic / client toggle pri focus a habits (návratová hodnota action)
 - Loading cez `loading.tsx` + skeleton komponenty
+- `input[type=date]` má globálne iOS štýly v `globals.css`, aby ladil s text/select
 
 ## Prístupnosť a jazyk
 
