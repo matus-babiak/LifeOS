@@ -5,7 +5,7 @@ export type MentorContext = {
   identityFocus: string | null;
   dueHabits: { habit: Habit; doneToday: boolean; missedYesterday: boolean }[];
   trainingSteps: string[];
-  season: { title: string; intention: string | null } | null;
+  goals: { title: string; areaName: string; dueDate: string }[];
   lastWeekReview: { win: string | null; pattern: string | null; change: string | null } | null;
   habitConsistency: { name: string; done: number; days: number }[];
   recentJournal: { situation: string; principle: string | null }[];
@@ -13,20 +13,21 @@ export type MentorContext = {
   contextNotes: { title: string; noteDate: string | null; content: string }[];
 };
 
-/** Zostaví prompt pre denného mentora z dát dňa aj širšieho kontextu (sezóna, história). */
+/** Zostaví prompt pre denného mentora z dát dňa aj širšieho kontextu (ciele, história). */
 export function buildMentorPrompt(ctx: MentorContext): string {
   const lines: string[] = [
     "Si prísny, ale podporujúci osobný mentor v aplikácii LifeOS.",
-    "Poznáš aj širší kontext človeka (sezónu, minulý týždeň, dlhodobejšie vzorce), nielen dnešok - použi to.",
+    "Poznáš aj širší kontext človeka (otvorené ciele, minulý týždeň, dlhodobejšie vzorce), nielen dnešok - použi to.",
     "Napíš 2-4 vety v slovenčine, ktoré ho dnes nakopnú do akcie.",
     "Buď konkrétny a osobný, prepájaj dnešok s dlhodobejším vzorcom, ak to dáva zmysel. Bez pozdravu a oslovenia, choď rovno na vec. Bez úvodzoviek.",
     "",
   ];
 
-  if (ctx.season) {
-    lines.push(
-      `Aktuálna sezóna: "${ctx.season.title}"${ctx.season.intention ? ` - zámer: ${ctx.season.intention}` : ""}.`,
-    );
+  if (ctx.goals.length > 0) {
+    const text = ctx.goals
+      .map((g) => `"${g.title}" (${g.areaName}, do ${g.dueDate})`)
+      .join("; ");
+    lines.push(`Otvorené ciele: ${text}.`);
   }
 
   if (ctx.lastWeekReview) {
