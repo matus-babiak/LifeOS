@@ -6,6 +6,8 @@ Osobný operačný systém pre rast, sebarealizáciu a vedomé budovanie života
 
 Produktové rozhodnutia a plán etáp: [PRODUCT.md](PRODUCT.md)
 
+AI development workflow (Knowledge Base, plan/implement agenti): [docs/ai/README.md](docs/ai/README.md)
+
 ## Lokálny vývoj
 
 ```bash

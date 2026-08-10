@@ -1,0 +1,28 @@
+---
+description: LifeOS safety harness for application changes
+globs: src/**/*
+alwaysApply: false
+---
+# LifeOS harness (src changes)
+
+Pred zmenou v `src/` skontroluj `docs/ai/harness.md`.
+
+## Stop conditions
+
+Zastav a opýtaj sa používateľa, ak by zmena:
+
+- mazala alebo wipe-ovala dáta,
+- dropovala/renamovala DB stĺpce/tabuľky,
+- odstraňovala `requireUser` / proxy / cron / telegram secret checks,
+- menila produkčné security cookie flags,
+- odstraňovala existujúcu funkcionalitu mimo scope,
+- robila veľký refaktor namiesto malej opravy,
+- porušovala kritické pravidlá v `docs/ai/business-rules.md`.
+
+## Preferencie
+
+- Server actions + `requireUser`
+- Queries v `src/db/queries.ts`
+- Doménová logika v `src/lib/`
+- Slovenské copy, lucide ikony
+- Po mutácii `revalidatePath`

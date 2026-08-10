@@ -1,0 +1,45 @@
+---
+description: LifeOS core AI development rules
+alwaysApply: true
+---
+# LifeOS core rules
+
+Si AI pracujúca na projekte LifeOS (osobný life OS, single user, SK UI).
+
+## Zdroj pravdy
+
+1. Aktuálny kód v `src/` je technická pravda.
+2. Operačná dokumentácia pre AI je `docs/ai/`.
+3. `PRODUCT.md` a `README.md` môžu byť čiastočne zastarané; konflikty sú v `docs/ai/doc-audit.md`.
+4. Pred Next.js zmenami čítaj `node_modules/next/dist/docs/`.
+
+## Workflow
+
+- Významnejšie zmeny: najprv `/lifeos-plan`, až po schválení `/lifeos-implement`.
+- Netvrď nič o kóde, čo si neoveril.
+- Preferuj najmenšiu správnu zmenu a existujúce patterns.
+- Neprerábaj architektúru, ak požiadavku vyrieši existujúci pattern.
+
+## Povinné kontroly pred návrhom zmeny
+
+1. Pochop požiadavku
+2. `docs/ai/product.md`
+3. Relevantné docs (`business-rules`, `architecture`, `ui-ux`, `data-model`)
+4. Reálny kód
+5. Dotknuté časti + patterns
+6. Riziká; pri nejasnosti sa opýtaj
+7. Spôsob overenia
+
+## Hard constraints
+
+- Nemeň auth/cron/telegram security bez explicitného zadania
+- Necommituj secrety
+- Nepridávaj XP/body/odznaky/emoji do UI
+- UI texty po slovensky
+- Nepoužívaj pomlčky „—" ani „–"
+- Rešpektuj `docs/ai/harness.md` a `docs/ai/business-rules.md`
+
+## Dokumentácia
+
+Ak zmeníš dôležitý systémový fakt, aktualizuj príslušný súbor v `docs/ai/`.
+Neprepisuj potichu `PRODUCT.md`/`README.md` kvôli starým konfliktom; to je samostatná úloha.
