@@ -64,6 +64,7 @@ Každý deň vedieť:
 
 - Denný mentor na dashboarde
 - Telegram chat s kontextom LifeOS + Obsidian poznámky (`/kontext`)
+- Telegram `/new`: menu na pridanie myšlienky, poznámky, presvedčenia alebo cieľa
 - Reframe obmedzujúcich presvedčení
 - Mentor note pri tréningu
 - Cron ráno (~05:00 UTC): morning insight do Telegramu

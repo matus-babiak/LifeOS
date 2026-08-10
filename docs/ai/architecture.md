@@ -46,7 +46,7 @@ AI volania idú cez `src/lib/gemini.ts` a prompt logiku v `src/lib/mentor.ts`
 | AI prompty | `src/lib/mentor.ts` (+ telegram/morning) |
 | Auth | `src/auth.ts`, `src/lib/session.ts`, `session-token.ts`, `src/proxy.ts` |
 | Export | `src/lib/export.ts`, `src/app/api/export/route.ts` |
-| Telegram | `src/app/api/telegram/route.ts`, `src/lib/telegram*.ts` |
+| Telegram | `src/app/api/telegram/route.ts`, `src/lib/telegram*.ts` (`telegram-capture.ts` = `/new`) |
 | Cron | `src/app/api/cron/reminders/route.ts` |
 
 ## Entry pointy

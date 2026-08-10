@@ -38,6 +38,7 @@ a bez `DATABASE_URL` sa použije vstavaná PGlite databáza.
      -H "Content-Type: application/json" \
      -d "{\"url\":\"https://<tvoja-domena>.vercel.app/api/telegram\",\"secret_token\":\"$TELEGRAM_WEBHOOK_SECRET\"}"
    ```
+   Bot príkazy: `/start`, `/new` (menu: myšlienka, poznámka, presvedčenie, cieľ).
    Cron `/api/cron/reminders` beží denne o 05:00 UTC (~07:00 SELČ / ~06:00 CET) a pošle top aktívny blok.
 5. **Tabuľky v produkčnej DB** - `npm run build` na Verceli si pred `next build`
    automaticky spustí `drizzle-kit push --force`, takže schéma sa pri každom

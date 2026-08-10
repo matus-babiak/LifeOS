@@ -1,5 +1,18 @@
 import { revalidatePath } from "next/cache";
 import { appendBlockNote, closeBlockById } from "@/lib/active-blocks";
+import {
+  formatCapturePromptMessage,
+  formatGoalAreaMessage,
+  formatNewMenuMessage,
+  formatNoteCategoryMessage,
+  goalAreaKeyboard,
+  isNewCommand,
+  newCaptureKeyboard,
+  noteCategoryKeyboard,
+  parseCaptureFromPrompt,
+  parseNewCallbackData,
+  saveCaptureFromPrompt,
+} from "@/lib/telegram-capture";
 import { replyAsTelegramMentor } from "@/lib/telegram-mentor";
 import {
   answerCallbackQuery,
@@ -109,7 +122,15 @@ async function handleCallback(query: TelegramCallbackQuery) {
     return;
   }
 
-  const parsed = query.data ? parseCallbackData(query.data) : null;
+  const data = query.data ?? "";
+
+  const newCb = parseNewCallbackData(data);
+  if (newCb) {
+    await handleNewCallback(query, chatId, newCb);
+    return;
+  }
+
+  const parsed = parseCallbackData(data);
   if (!parsed) {
     await answerCallbackQuery(query.id, "Neznáma akcia.");
     return;
@@ -135,6 +156,74 @@ async function handleCallback(query: TelegramCallbackQuery) {
   // Klasický HTML: reply_to_message.text spoľahlivo obsahuje BLK:id marker
   await sendTelegramMessage(
     markdownToTelegramHtml(formatNotePromptMessage(parsed.blockId)),
+    {
+      chatId,
+      forceReply: true,
+      format: "html",
+    },
+  );
+}
+
+async function handleNewCallback(
+  query: TelegramCallbackQuery,
+  chatId: number,
+  newCb: NonNullable<ReturnType<typeof parseNewCallbackData>>,
+) {
+  if (newCb.action === "type") {
+    if (newCb.type === "note") {
+      await answerCallbackQuery(query.id, "Vyber kategóriu.");
+      await sendTelegramMessage(formatNoteCategoryMessage(), {
+        chatId,
+        replyMarkup: await noteCategoryKeyboard(),
+      });
+      return;
+    }
+    if (newCb.type === "goal") {
+      await answerCallbackQuery(query.id, "Vyber oblasť.");
+      await sendTelegramMessage(formatGoalAreaMessage(), {
+        chatId,
+        replyMarkup: await goalAreaKeyboard(),
+      });
+      return;
+    }
+
+    await answerCallbackQuery(query.id, "Napíš text ako odpoveď.");
+    await sendTelegramMessage(
+      markdownToTelegramHtml(
+        formatCapturePromptMessage({ type: newCb.type }),
+      ),
+      {
+        chatId,
+        forceReply: true,
+        format: "html",
+      },
+    );
+    return;
+  }
+
+  if (newCb.action === "note-category") {
+    await answerCallbackQuery(query.id, "Napíš poznámku ako odpoveď.");
+    await sendTelegramMessage(
+      markdownToTelegramHtml(
+        formatCapturePromptMessage({
+          type: "note",
+          category: newCb.category,
+        }),
+      ),
+      {
+        chatId,
+        forceReply: true,
+        format: "html",
+      },
+    );
+    return;
+  }
+
+  await answerCallbackQuery(query.id, "Napíš cieľ ako odpoveď.");
+  await sendTelegramMessage(
+    markdownToTelegramHtml(
+      formatCapturePromptMessage({ type: "goal", areaId: newCb.areaId }),
+    ),
     {
       chatId,
       forceReply: true,
@@ -179,23 +268,58 @@ async function handleMessage(message: TelegramMessage) {
       revalidatePath("/");
       return;
     }
+
+    // 2) Odpoveď na CAP:… → nový zápis (/new)
+    const capture = parseCaptureFromPrompt(repliedText);
+    if (capture) {
+      const saved = await saveCaptureFromPrompt(capture, text);
+      if (!saved.ok) {
+        await sendTelegramMessage(
+          formatSystemNotice(
+            "Neuložené",
+            "Text je prázdny alebo kategória/oblasť neplatí.",
+            "⚠️",
+          ),
+          { chatId },
+        );
+        return;
+      }
+      if (saved.type === "thought") revalidatePath("/myslienky");
+      else if (saved.type === "belief") revalidatePath("/presvedcenia");
+      else if (saved.type === "note") revalidatePath("/poznamky");
+      else {
+        revalidatePath("/vizia");
+        revalidatePath("/");
+      }
+      await sendTelegramMessage(saved.notice, { chatId });
+      return;
+    }
   }
 
-  // 2) Bežná správa → chat s AI mentorom
+  // 3) Príkazy
   if (text === "/start") {
     await sendTelegramMessage(
       [
-        "# 🧭 LifeOS mentor",
+        "# LifeOS mentor",
         "",
         "Napíš, čo ťa tlačí, alebo počkaj na **ranný fokus**.",
         "",
-        "Odpovede sú formátované s nadpismi a tučným textom priamo v Telegrame.",
+        "Nový zápis: **/new** (myšlienka, poznámka, presvedčenie, cieľ).",
       ].join("\n"),
       { chatId },
     );
     return;
   }
 
+  if (isNewCommand(text)) {
+    await sendTelegramMessage(formatNewMenuMessage(), {
+      chatId,
+      replyMarkup: newCaptureKeyboard(),
+    });
+    return;
+  }
+
+  // 4) Bežná správa → chat s AI mentorom
   const answer = await replyAsTelegramMentor(text);
   await sendTelegramMessage(answer, { chatId });
 }
