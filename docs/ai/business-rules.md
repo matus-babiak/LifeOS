@@ -64,8 +64,9 @@ schválenia používateľa (a aktualizácie tohto dokumentu).
 4. Context upload limity: max 5000 docs, 500_000 znakov/súbor, mentor budget ~400k znakov.
 5. Telegram odpoveď cieľ ~4000 znakov.
 6. Seed oblastí je idempotentný.
-7. Dark/light mode cez next-themes.
-8. PWA manifest + ikony.
+7. `ensureSchema` pri štarte doplní `goals` a odstráni zastaranú `seasons`, ak treba.
+8. Dark/light mode cez next-themes.
+9. PWA manifest + ikony.
 
 ## Poznámky k rozporom
 
