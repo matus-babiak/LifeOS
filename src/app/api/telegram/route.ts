@@ -355,45 +355,10 @@ async function handleMessage(message: TelegramMessage) {
   if (!text) return;
 
   const chatId = message.chat.id;
-
-  // 1) Odpoveď na BLK:id → poznámka k aktívnemu bloku (nie chat)
   const repliedText = messagePlainText(message.reply_to_message);
-  if (repliedText) {
-    const blockId = parseBlockIdFromNotePrompt(repliedText);
-    if (blockId != null) {
-      const updated = await appendBlockNote(blockId, text);
-      if (!updated) {
-        await sendTelegramMessage(
-          formatSystemNotice(
-            "Blok nenájdený",
-            "Blok sa nenašiel alebo už je uzavretý.",
-            "⚠️",
-          ),
-          { chatId },
-        );
-        return;
-      }
-      await sendTelegramMessage(
-        formatSystemNotice(
-          "Poznámka uložená",
-          `K bloku „${updated.title}“.`,
-          "📝",
-        ),
-        { chatId },
-      );
-      revalidatePath("/");
-      return;
-    }
 
-    // 2) Odpoveď na CAP:… → nový zápis (/new)
-    const capture = parseCaptureFromPrompt(repliedText);
-    if (capture) {
-      await commitCapture(capture, text, chatId);
-      return;
-    }
-  }
-
-  // 3) Príkazy
+  // 1) Príkazy majú prednosť aj pri reply
+  // (inak by /ulozit na správu s BLK: išlo ako dopísanie k bloku).
   if (text === "/start") {
     await sendTelegramMessage(
       [
@@ -438,6 +403,42 @@ async function handleMessage(message: TelegramMessage) {
       replyMarkup: saveCaptureKeyboard(),
     });
     return;
+  }
+
+  // 2) Odpoveď na BLK:id → poznámka k aktívnemu bloku (nie chat)
+  if (repliedText) {
+    const blockId = parseBlockIdFromNotePrompt(repliedText);
+    if (blockId != null) {
+      const updated = await appendBlockNote(blockId, text);
+      if (!updated) {
+        await sendTelegramMessage(
+          formatSystemNotice(
+            "Blok nenájdený",
+            "Blok sa nenašiel alebo už je uzavretý.",
+            "⚠️",
+          ),
+          { chatId },
+        );
+        return;
+      }
+      await sendTelegramMessage(
+        formatSystemNotice(
+          "Poznámka uložená",
+          `K bloku „${updated.title}“.`,
+          "📝",
+        ),
+        { chatId },
+      );
+      revalidatePath("/");
+      return;
+    }
+
+    // 3) Odpoveď na CAP:… → nový zápis (/new)
+    const capture = parseCaptureFromPrompt(repliedText);
+    if (capture) {
+      await commitCapture(capture, text, chatId);
+      return;
+    }
   }
 
   // 4) Bežná správa → chat s AI mentorom
