@@ -40,7 +40,8 @@ a bez `DATABASE_URL` sa použije vstavaná PGlite databáza.
    ```
    Bot príkazy: `/start`, `/new` (nový zápis), `/ulozit` (odpoveď na správu → uložiť do LifeOS).
    Pod odpoveďami mentora je tlačidlo „Uložiť do LifeOS“.
-   Cron `/api/cron/reminders` beží denne o 05:00 UTC (~07:00 SELČ / ~06:00 CET) a pošle top aktívny blok.
+   Cron `/api/cron/reminders` beží denne o 6:30 času v Bratislave a pošle ranný morning insight do Telegramu
+   (dva UTC behy pre zimný/letný čas + kontrola lokálneho času v kóde).
 5. **Tabuľky v produkčnej DB** - `npm run build` na Verceli si pred `next build`
    automaticky spustí `drizzle-kit push --force`, takže schéma sa pri každom
    nasadení sama zosynchronizuje s `DATABASE_URL`. Ručný krok netreba.

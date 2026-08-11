@@ -74,7 +74,8 @@ npm run build  →  drizzle-kit push --force && next build
 ```
 
 Pri každom Vercel deployi sa schéma syncne na produkčnú DB.
-Cron: `GET /api/cron/reminders` denne o `0 5 * * *` (05:00 UTC).
+Cron: `GET /api/cron/reminders` denne o 6:30 `Europe/Bratislava`
+(dva UTC schedule `30 4 * * *` a `30 5 * * *` + guard `isMorningFocusTime`).
 
 ## Env premenné (čítané v kóde)
 

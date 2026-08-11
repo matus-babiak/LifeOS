@@ -1,3 +1,4 @@
+import { isMorningFocusTime } from "@/lib/dates";
 import { generateMorningInsight } from "@/lib/morning-insight";
 import { saveMessageKeyboard } from "@/lib/telegram-capture";
 import { sendTelegramMessage, telegramConfigured } from "@/lib/telegram";
@@ -10,8 +11,8 @@ function unauthorized() {
 }
 
 /**
- * Vercel Cron: autonómna ranná analýza denníka/presvedčení cez Gemini
- * a odoslanie 1 kľúčového mentálneho bloku do Telegramu.
+ * Vercel Cron: ranný fokus do Telegramu o 6:30 Europe/Bratislava.
+ * Dva UTC schedule (04:30 a 05:30) pokrývajú letný/zimný čas; guard pustí len 6:30 BA.
  */
 export async function GET(req: Request) {
   const secret = process.env.CRON_SECRET?.trim();
@@ -25,6 +26,14 @@ export async function GET(req: Request) {
   const auth = req.headers.get("authorization");
   if (auth !== `Bearer ${secret}`) {
     return unauthorized();
+  }
+
+  if (!isMorningFocusTime()) {
+    return Response.json({
+      ok: true,
+      sent: false,
+      reason: "outside_bratislava_0630",
+    });
   }
 
   if (!telegramConfigured()) {

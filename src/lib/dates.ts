@@ -7,18 +7,39 @@ export function todayISO(): string {
 
 /** Aktuálna hodina (0-23) v bratislavskom čase. */
 export function currentHour(): number {
-  return Number(
-    new Intl.DateTimeFormat("en-GB", {
-      timeZone: TZ,
-      hour: "2-digit",
-      hour12: false,
-    }).format(new Date()),
-  );
+  return currentHourMinute().hour;
+}
+
+/** Aktuálna hodina a minúta v bratislavskom čase. */
+export function currentHourMinute(now = new Date()): {
+  hour: number;
+  minute: number;
+} {
+  const parts = new Intl.DateTimeFormat("en-GB", {
+    timeZone: TZ,
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  }).formatToParts(now);
+  const hourRaw = parts.find((p) => p.type === "hour")?.value ?? "0";
+  const minuteRaw = parts.find((p) => p.type === "minute")?.value ?? "0";
+  // en-GB + hour12:false vie vrátiť "24" o polnoci
+  const hourNum = Number(hourRaw);
+  return {
+    hour: hourNum === 24 ? 0 : hourNum,
+    minute: Number(minuteRaw),
+  };
 }
 
 /** Večerný režim dashboardu začína o 18:00. */
 export function isEvening(): boolean {
   return currentHour() >= 18;
+}
+
+/** Ranný Telegram fokus: každý deň 6:30 Europe/Bratislava. */
+export function isMorningFocusTime(now = new Date()): boolean {
+  const { hour, minute } = currentHourMinute(now);
+  return hour === 6 && minute === 30;
 }
 
 export function addDays(iso: string, days: number): string {
