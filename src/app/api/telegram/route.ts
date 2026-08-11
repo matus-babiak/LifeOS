@@ -1,5 +1,6 @@
 import { revalidatePath } from "next/cache";
 import { appendBlockNote, closeBlockById } from "@/lib/active-blocks";
+import { saveAiNoteFromTelegram } from "@/lib/ai-notes";
 import {
   formatCapturePromptMessage,
   formatGoalAreaMessage,
@@ -212,18 +213,24 @@ async function handleSaveCallback(
   chatId: number,
   saveCb: SaveCallback,
 ) {
+  // One-click: tlačidlo pod AI odpoveďou → AI poznámky + auto kategória
   if (saveCb.action === "ask") {
-    const sourceId = query.message?.message_id;
-    if (sourceId == null) {
+    const sourceText = messagePlainText(query.message).trim();
+    if (!sourceText) {
       await answerCallbackQuery(query.id, "Správu sa nepodarilo nájsť.");
       return;
     }
-    await answerCallbackQuery(query.id, "Vyber, kam uložiť.");
-    await sendTelegramMessage(formatSaveMenuMessage(), {
-      chatId,
-      replyToMessageId: sourceId,
-      replyMarkup: saveCaptureKeyboard(),
-    });
+    await answerCallbackQuery(query.id, "Ukladám…");
+    const saved = await saveAiNoteFromTelegram(sourceText);
+    if (!saved.ok) {
+      await sendTelegramMessage(
+        formatSystemNotice("Neuložené", "Text správy je prázdny.", "⚠️"),
+        { chatId },
+      );
+      return;
+    }
+    revalidatePath("/ai-poznamky");
+    await sendTelegramMessage(saved.notice, { chatId });
     return;
   }
 
@@ -367,8 +374,8 @@ async function handleMessage(message: TelegramMessage) {
         "Napíš, čo ťa tlačí, alebo počkaj na **ranný fokus**.",
         "",
         "Nový zápis: **/new**",
-        "Uložiť správu: podrž ju → Odpovedať → **/ulozit**",
-        "Alebo tlačidlo **Uložiť do LifeOS** pod odpoveďou bota.",
+        "Uložiť správu (myšlienka / poznámka / …): podrž ju → Odpovedať → **/ulozit**",
+        "Tlačidlo **Uložiť do LifeOS** pod AI odpoveďou: uloží do AI poznámok.",
       ].join("\n"),
       { chatId },
     );
@@ -390,7 +397,7 @@ async function handleMessage(message: TelegramMessage) {
       await sendTelegramMessage(
         formatSystemNotice(
           "Ako uložiť správu",
-          "Podrž správu → Odpovedať → napíš /ulozit. Alebo použi tlačidlo Uložiť do LifeOS pod odpoveďou bota.",
+          "Podrž správu → Odpovedať → napíš /ulozit. Tlačidlo Uložiť do LifeOS pod AI odpoveďou uloží priamo do AI poznámok.",
           "💡",
         ),
         { chatId },

@@ -46,7 +46,7 @@ AI volania idú cez `src/lib/gemini.ts` a prompt logiku v `src/lib/mentor.ts`
 | AI prompty | `src/lib/mentor.ts` (+ telegram/morning/progress-focus) |
 | Auth | `src/auth.ts`, `src/lib/session.ts`, `session-token.ts`, `src/proxy.ts` |
 | Export | `src/lib/export.ts`, `src/app/api/export/route.ts` |
-| Telegram | `src/app/api/telegram/route.ts`, `src/lib/telegram*.ts` (`telegram-capture.ts` = `/new` + `/ulozit`) |
+| Telegram | `src/app/api/telegram/route.ts`, `src/lib/telegram*.ts` (`telegram-capture.ts` = `/new` + `/ulozit`; `ai-notes.ts` = one-click save AI odpovede) |
 | Cron | `src/app/api/cron/reminders/route.ts` |
 
 ## Entry pointy
@@ -103,6 +103,7 @@ prípadne `npm run build` pri zmenách build/DB.
 | `/pozornost` | AttentionItemCard | pozornost/actions | attention_items |
 | `/oblasti` | export link | export.ts | areas + related |
 | `/poznamky` | NewNoteForm | notes.ts | notes |
+| `/ai-poznamky` | AiNoteCard | ai-notes.ts | ai_notes |
 | `/myslienky` | NewThoughtForm | myslienky/actions | thoughts |
 | `/presvedcenia` | BeliefReframe | mentor reframe | beliefs |
 | `/kontext` | ContextUploader | context.ts | context_documents |

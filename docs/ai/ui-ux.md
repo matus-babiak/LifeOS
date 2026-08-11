@@ -17,9 +17,10 @@ Definovaná v `src/components/AppShell.tsx`:
 9. Pozornosť `/pozornost`
 10. Oblasti `/oblasti`
 11. Poznámky `/poznamky`
-12. Myšlienky `/myslienky`
-13. Presvedčenia `/presvedcenia`
-14. Kontext `/kontext`
+12. AI poznámky `/ai-poznamky`
+13. Myšlienky `/myslienky`
+14. Presvedčenia `/presvedcenia`
+15. Kontext `/kontext`
 
 Desktop: ľavý sidebar. Mobil: top bar + slide-over menu.
 Brand: „LifeOS" + logo mark.
@@ -45,6 +46,12 @@ Brand: „LifeOS" + logo mark.
 - Ciele: pri vytvorení výber oblasti + termín; filter podľa oblasti; editácia, zmazanie, dosiahnuté
 - Sezóny už nie sú súčasťou UI
 
+## AI poznámky `/ai-poznamky`
+
+- Zoznam textov uložených z Telegram AI (tlačidlo Uložiť do LifeOS)
+- Filter podľa voľných kategórií, zmena kategórie, zmazanie
+- Ručné pridávanie v prvej verzii nie je
+
 ## Friction budget
 
 - Ranný check-in má byť krátky (copy ≈ 2 min)
@@ -67,6 +74,6 @@ Brand: „LifeOS" + logo mark.
 ## Čo AI nemá robiť v UI
 
 - Nepridávať dashboard clutter (stat strips, promo badges) bez schválenia
-- Nemeniť navigáciu „len tak" (14 položiek je citlivé)
+- Nemeniť navigáciu „len tak" (15 položiek je citlivé)
 - Nezavádzať anglické UI labels
 - Nepridávať emoji

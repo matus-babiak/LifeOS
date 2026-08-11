@@ -40,6 +40,7 @@ poznámky, myšlienky, presvedčenia, progress focus, pozornosť, aktívne bloky
 | `tolerances` | Energetické úniky | text → areaId+energy triage |
 | `weekly_reviews` | Týždenná reflexia | weekStart unique, win/pattern/change |
 | `notes` | Kategorizované poznámky | category (area slug alebo `lifeos`) |
+| `ai_notes` | Poznámky z Telegram AI odpovedí | category (voľný SK štítok), content |
 | `beliefs` | Obmedzujúce presvedčenia | text, reframe, resolved |
 | `thoughts` | Voľné myšlienky | content |
 | `progress_focus_items` | AI návrhy na vedomú prácu | title, summary, detail, nextStep, status, fingerprint |
@@ -51,7 +52,7 @@ poznámky, myšlienky, presvedčenia, progress focus, pozornosť, aktívne bloky
 ## Seed
 
 `ensureSeeded()` vloží iba 6 oblastí, ak tabuľka `areas` je prázdna.
-`ensureSchema()` doplní `goals` a `progress_focus_items` a odstráni zastaranú `seasons`.
+`ensureSchema()` doplní `goals`, `progress_focus_items` a `ai_notes` a odstráni zastaranú `seasons`.
 Štartovacie tréningy z PRODUCT.md **nie sú** v seed kóde.
 
 ## Migračná politika

@@ -65,7 +65,8 @@ Každý deň vedieť:
 - Denný mentor na dashboarde
 - Telegram chat s kontextom LifeOS + Obsidian poznámky (`/kontext`)
 - Telegram `/new`: menu na pridanie myšlienky, poznámky, presvedčenia alebo cieľa
-- Telegram `/ulozit` (odpoveď na správu, aj staršiu v histórii) + tlačidlo „Uložiť do LifeOS“: uloží text správy do appky
+- Telegram `/ulozit` (odpoveď na správu, aj staršiu v histórii): menu kam uložiť (myšlienka / poznámka / presvedčenie / cieľ)
+- Telegram tlačidlo „Uložiť do LifeOS“ pod AI odpoveďou: one-click uloženie do sekcie AI poznámky s auto kategóriou
 - Progress focus: na kliknutie AI navrhne až 5 nových vecí na vedomú prácu (bez opakovania); hotové/odložené ostávajú obnoviteľné
 - Reframe obmedzujúcich presvedčení
 - Mentor note pri tréningu
@@ -74,7 +75,7 @@ Každý deň vedieť:
 ## Hlavné obrazovky (nav)
 
 Dnes, Tréningy, Návyky, Tolerancie, Denník, Týždeň, Vízia a ciele, Progress focus, Pozornosť,
-Oblasti, Poznámky, Myšlienky, Presvedčenia, Kontext.
+Oblasti, Poznámky, AI poznámky, Myšlienky, Presvedčenia, Kontext.
 
 Plus: `/login`, `/ikona` (verejná), `/treningy/[id]`.
 
@@ -86,7 +87,7 @@ V kóde je hotové viac než pôvodný PRODUCT.md predpokladal:
 - Tréningy + míľniky
 - Denník, týždeň, vízia a ciele (bez sezón)
 - Oblasti + markdown export
-- Tolerancie, pozornosť, poznámky, myšlienky, presvedčenia
+- Tolerancie, pozornosť, poznámky, AI poznámky, myšlienky, presvedčenia
 - Aktívne bloky
 - AI mentor (web + Telegram + cron)
 - Upload Obsidian kontextu

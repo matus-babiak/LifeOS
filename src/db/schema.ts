@@ -206,6 +206,16 @@ export const notes = pgTable("notes", {
     .defaultNow(),
 });
 
+// AI poznámky - texty uložené z Telegram AI odpovedí (voľné kategórie, nie area slugy)
+export const aiNotes = pgTable("ai_notes", {
+  id: serial("id").primaryKey(),
+  category: text("category").notNull(),
+  content: text("content").notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+});
+
 // Obmedzujúce presvedčenia - limitujúca myšlienka + AI reframe smerom k rastovému mindsetu
 export const beliefs = pgTable("beliefs", {
   id: serial("id").primaryKey(),

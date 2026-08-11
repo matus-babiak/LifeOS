@@ -14,6 +14,7 @@ import {
   journalEntries,
   milestones,
   notes,
+  aiNotes,
   thoughts,
   tolerances,
   trainings,
@@ -599,6 +600,27 @@ export async function getNotesView() {
     db.select().from(notes).orderBy(desc(notes.createdAt)),
   ]);
   return { areas: areaList, notes: noteList };
+}
+
+/** AI poznámky z Telegramu - najnovšie najprv + zoznam použitých kategórií. */
+export async function getAiNotesView() {
+  const noteList = await db
+    .select()
+    .from(aiNotes)
+    .orderBy(desc(aiNotes.createdAt));
+  const categories = [
+    ...new Set(noteList.map((n) => n.category).filter(Boolean)),
+  ].sort((a, b) => a.localeCompare(b, "sk"));
+  return { notes: noteList, categories };
+}
+
+/** Distinct kategórie AI poznámok (pre Gemini reuse). */
+export async function getAiNoteCategories(): Promise<string[]> {
+  const rows = await db
+    .selectDistinct({ category: aiNotes.category })
+    .from(aiNotes)
+    .orderBy(asc(aiNotes.category));
+  return rows.map((r) => r.category).filter(Boolean);
 }
 
 /** Myšlienky - najnovšie najprv. */

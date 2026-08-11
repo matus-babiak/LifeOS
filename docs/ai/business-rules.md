@@ -60,13 +60,14 @@ schválenia používateľa (a aktualizácie tohto dokumentu).
 
 1. Friction copy: ráno ~2 min, večer ~3 min.
 2. Notes kategórie = 6 area slugov + `lifeos`.
-3. Attention buckets: `now` | `later`.
-4. Context upload limity: max 5000 docs, 500_000 znakov/súbor, mentor budget ~400k znakov.
-5. Telegram odpoveď cieľ ~4000 znakov.
-6. Seed oblastí je idempotentný.
-7. `ensureSchema` pri štarte doplní `goals` a odstráni zastaranú `seasons`, ak treba.
-8. Dark/light mode cez next-themes.
-9. PWA manifest + ikony.
+3. AI poznámky (`ai_notes`): voľné slovenské kategórie (Gemini pri Telegram save; fallback „Bez kategórie"); nie area slugy.
+4. Attention buckets: `now` | `later`.
+5. Context upload limity: max 5000 docs, 500_000 znakov/súbor, mentor budget ~400k znakov.
+6. Telegram odpoveď cieľ ~4000 znakov.
+7. Seed oblastí je idempotentný.
+8. `ensureSchema` pri štarte doplní `goals`, `progress_focus_items`, `ai_notes` a odstráni zastaranú `seasons`, ak treba.
+9. Dark/light mode cez next-themes.
+10. PWA manifest + ikony.
 
 ## Poznámky k rozporom
 
