@@ -112,4 +112,4 @@ V kóde je hotové viac než pôvodný PRODUCT.md predpokladal:
 
 - Presný produkčný obsah DB (tréningy mimo seedu)
 - Či sa mŕtvy kód okolo „oldest open block" reminder ešte plánuje zapojiť
-- Preferovaná budúca navigácia (13 položiek vs pôvodných 6)
+- Preferovaná budúca navigácia (14 položiek vs pôvodných 6)
