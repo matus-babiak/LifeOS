@@ -20,8 +20,8 @@ export default async function BeliefsPage() {
       <header>
         <h1 className="text-2xl font-semibold tracking-tight">Presvedčenia</h1>
         <p className="mt-1 text-sm text-muted">
-          Zapíš obmedzujúcu myšlienku, ktorá ťa drží vo fixnom mindsete - mentor
-          ti k nej ukáže reframe a konkrétny krok von.
+          Zapíš limitujúcu myšlienku. Mentor pomenuje vzorec, oslabí ilúziu a
+          dá praktický rastový pohľad, pevne a podporujúco, bez lámania.
         </p>
       </header>
 

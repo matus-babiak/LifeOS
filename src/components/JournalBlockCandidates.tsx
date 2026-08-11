@@ -43,10 +43,11 @@ export default function JournalBlockCandidates({
   return (
     <section className="rounded-2xl border border-accent/40 bg-accent-soft p-5 shadow-sm">
       <h2 className="font-medium text-accent-ink">
-        AI navrhuje aktívne bloky
+        AI navrhuje mentálne vzorce
       </h2>
       <p className="mt-1 text-xs text-muted">
-        Z tvojho zápisu. Potvrď, čo má visieť, alebo odmietni.
+        Z tvojho zápisu. Potvrď, čo má ostať ako aktívny blok na spevnenie, alebo
+        odmietni.
       </p>
       <ul className="mt-4 flex flex-col gap-3">
         {items.map((candidate, index) => {

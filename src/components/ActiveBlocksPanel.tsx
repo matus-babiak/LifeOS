@@ -50,7 +50,7 @@ function QuickAdd({ compact }: { compact?: boolean }) {
         name="title"
         type="text"
         required
-        placeholder="Čo ťa blokuje?"
+        placeholder="Aký mentálny vzorec ťa drží?"
         className="w-full rounded-lg border border-line bg-surface px-3 py-2 text-sm outline-none focus:border-accent"
       />
       <textarea
@@ -115,6 +115,10 @@ export default function ActiveBlocksPanel({
           Aktívne bloky ({blocks.length})
         </h2>
       </div>
+      <p className="mb-4 text-xs text-accent-ink/80">
+        Mentálne vzorce, ktoré ešte držia. Cieľ je ich spevniť a rozseknúť, nie
+        ich checkboxovať.
+      </p>
       <ul className="flex flex-col gap-3">
         {blocks.map((block) => {
           const sev = severityLabel(block.severity);

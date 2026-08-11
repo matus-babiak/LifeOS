@@ -68,9 +68,12 @@ Každý deň vedieť:
 - Telegram `/ulozit` (odpoveď na správu, aj staršiu v histórii): menu kam uložiť (myšlienka / poznámka / presvedčenie / cieľ)
 - Telegram tlačidlo „Uložiť do LifeOS“ pod AI odpoveďou: one-click uloženie do sekcie AI poznámky s auto kategóriou
 - Progress focus: na kliknutie AI navrhne až 5 nových vecí na vedomú prácu (bez opakovania); hotové/odložené ostávajú obnoviteľné
-- Reframe obmedzujúcich presvedčení
+- Reframe obmedzujúcich presvedčení (pevný podporujúci mentor: pomenuj vzorec, oslab ilúziu, daj praktický krok; spevni, nelám)
 - Mentor note pri tréningu
 - Cron ráno (6:30 Europe/Bratislava): morning insight do Telegramu
+
+AI mentor pri mindset práci (presvedčenia, bloky, Telegram chat, ranný insight) kalibruje tlak:
+pritlačí alebo poľaví podľa kontextu; prakticky, bez motivačného fluffu a bez suchej filozofie.
 
 ## Hlavné obrazovky (nav)
 
