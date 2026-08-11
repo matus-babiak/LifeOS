@@ -13,12 +13,13 @@ Definovaná v `src/components/AppShell.tsx`:
 5. Denník `/dennik`
 6. Týždeň `/tyzden`
 7. Vízia a ciele `/vizia`
-8. Pozornosť `/pozornost`
-9. Oblasti `/oblasti`
-10. Poznámky `/poznamky`
-11. Myšlienky `/myslienky`
-12. Presvedčenia `/presvedcenia`
-13. Kontext `/kontext`
+8. Progress focus `/progress-focus`
+9. Pozornosť `/pozornost`
+10. Oblasti `/oblasti`
+11. Poznámky `/poznamky`
+12. Myšlienky `/myslienky`
+13. Presvedčenia `/presvedcenia`
+14. Kontext `/kontext`
 
 Desktop: ľavý sidebar. Mobil: top bar + slide-over menu.
 Brand: „LifeOS" + logo mark.
@@ -66,6 +67,6 @@ Brand: „LifeOS" + logo mark.
 ## Čo AI nemá robiť v UI
 
 - Nepridávať dashboard clutter (stat strips, promo badges) bez schválenia
-- Nemeniť navigáciu „len tak" (13 položiek je citlivé)
+- Nemeniť navigáciu „len tak" (14 položiek je citlivé)
 - Nezavádzať anglické UI labels
 - Nepridávať emoji

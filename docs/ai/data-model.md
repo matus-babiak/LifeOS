@@ -14,7 +14,7 @@ Tréning (area, level 1-5, status)
 ```
 
 Ďalšie paralelné entity: check-iny, fokus, denník, tolerancie, týždenné review,
-poznámky, myšlienky, presvedčenia, pozornosť, aktívne bloky, context dokumenty.
+poznámky, myšlienky, presvedčenia, progress focus, pozornosť, aktívne bloky, context dokumenty.
 
 ## Enumy
 
@@ -42,6 +42,7 @@ poznámky, myšlienky, presvedčenia, pozornosť, aktívne bloky, context dokume
 | `notes` | Kategorizované poznámky | category (area slug alebo `lifeos`) |
 | `beliefs` | Obmedzujúce presvedčenia | text, reframe, resolved |
 | `thoughts` | Voľné myšlienky | content |
+| `progress_focus_items` | AI návrhy na vedomú prácu | title, summary, detail, nextStep, status, fingerprint |
 | `context_documents` | Obsidian palivo pre AI | path unique, noteDate |
 | `visions` | Vízia | horizon `1y`/`5y` unique |
 | `attention_items` | Kam ide pozornosť | bucket now/later |
@@ -50,6 +51,7 @@ poznámky, myšlienky, presvedčenia, pozornosť, aktívne bloky, context dokume
 ## Seed
 
 `ensureSeeded()` vloží iba 6 oblastí, ak tabuľka `areas` je prázdna.
+`ensureSchema()` doplní `goals` a `progress_focus_items` a odstráni zastaranú `seasons`.
 Štartovacie tréningy z PRODUCT.md **nie sú** v seed kóde.
 
 ## Migračná politika

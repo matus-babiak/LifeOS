@@ -58,7 +58,7 @@ let schemaReady = false;
 
 /**
  * Doplní schému, ak build-time drizzle push nesiahol na produkčný Neon.
- * Vytvorí `goals`, odstráni zastaranú `seasons` (schválené).
+ * Vytvorí `goals` a `progress_focus_items`, odstráni zastaranú `seasons` (schválené).
  */
 export async function ensureSchema() {
   if (schemaReady) return;
@@ -72,6 +72,25 @@ export async function ensureSchema() {
       created_at timestamp with time zone NOT NULL DEFAULT now(),
       updated_at timestamp with time zone NOT NULL DEFAULT now()
     )
+  `);
+  await db.execute(sql`
+    CREATE TABLE IF NOT EXISTS progress_focus_items (
+      id serial PRIMARY KEY,
+      title text NOT NULL,
+      summary text NOT NULL,
+      detail text NOT NULL,
+      next_step text,
+      status text NOT NULL DEFAULT 'active',
+      fingerprint text NOT NULL,
+      created_at timestamp with time zone NOT NULL DEFAULT now(),
+      updated_at timestamp with time zone NOT NULL DEFAULT now(),
+      accepted_at timestamp with time zone,
+      done_at timestamp with time zone
+    )
+  `);
+  await db.execute(sql`
+    CREATE UNIQUE INDEX IF NOT EXISTS progress_focus_items_fingerprint_uidx
+    ON progress_focus_items (fingerprint)
   `);
   await db.execute(sql`DROP TABLE IF EXISTS seasons`);
   schemaReady = true;
