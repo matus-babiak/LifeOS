@@ -288,6 +288,29 @@ export const activeBlocks = pgTable("active_blocks", {
     .defaultNow(),
 });
 
+// Progress focus - AI návrhy vecí na vedomú prácu (anti-repeat cez fingerprint)
+export const progressFocusItems = pgTable(
+  "progress_focus_items",
+  {
+    id: serial("id").primaryKey(),
+    title: text("title").notNull(),
+    summary: text("summary").notNull(),
+    detail: text("detail").notNull(),
+    nextStep: text("next_step"),
+    status: text("status").notNull().default("active"), // active | done | dismissed
+    fingerprint: text("fingerprint").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    acceptedAt: timestamp("accepted_at", { withTimezone: true }),
+    doneAt: timestamp("done_at", { withTimezone: true }),
+  },
+  (t) => [uniqueIndex("progress_focus_items_fingerprint_uidx").on(t.fingerprint)],
+);
+
 export const areasRelations = relations(areas, ({ many }) => ({
   trainings: many(trainings),
   tolerances: many(tolerances),

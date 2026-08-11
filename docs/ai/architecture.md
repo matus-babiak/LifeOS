@@ -43,7 +43,7 @@ AI volania idú cez `src/lib/gemini.ts` a prompt logiku v `src/lib/mentor.ts`
 | Schéma | `src/db/schema.ts` |
 | Seed oblastí | `src/db/seed.ts` (`ensureSeeded`) |
 | Doménové pravidlá | `src/lib/habits.ts`, `dates.ts`, actions constraints |
-| AI prompty | `src/lib/mentor.ts` (+ telegram/morning) |
+| AI prompty | `src/lib/mentor.ts` (+ telegram/morning/progress-focus) |
 | Auth | `src/auth.ts`, `src/lib/session.ts`, `session-token.ts`, `src/proxy.ts` |
 | Export | `src/lib/export.ts`, `src/app/api/export/route.ts` |
 | Telegram | `src/app/api/telegram/route.ts`, `src/lib/telegram*.ts` (`telegram-capture.ts` = `/new` + `/ulozit`) |

@@ -66,13 +66,14 @@ Každý deň vedieť:
 - Telegram chat s kontextom LifeOS + Obsidian poznámky (`/kontext`)
 - Telegram `/new`: menu na pridanie myšlienky, poznámky, presvedčenia alebo cieľa
 - Telegram `/ulozit` (odpoveď na správu, aj staršiu v histórii) + tlačidlo „Uložiť do LifeOS“: uloží text správy do appky
+- Progress focus: na kliknutie AI navrhne až 5 nových vecí na vedomú prácu (bez opakovania), detail + sústrediť sa do dnešného fokusu
 - Reframe obmedzujúcich presvedčení
 - Mentor note pri tréningu
 - Cron ráno (6:30 Europe/Bratislava): morning insight do Telegramu
 
 ## Hlavné obrazovky (nav)
 
-Dnes, Tréningy, Návyky, Tolerancie, Denník, Týždeň, Vízia a ciele, Pozornosť,
+Dnes, Tréningy, Návyky, Tolerancie, Denník, Týždeň, Vízia a ciele, Progress focus, Pozornosť,
 Oblasti, Poznámky, Myšlienky, Presvedčenia, Kontext.
 
 Plus: `/login`, `/ikona` (verejná), `/treningy/[id]`.
@@ -111,4 +112,4 @@ V kóde je hotové viac než pôvodný PRODUCT.md predpokladal:
 
 - Presný produkčný obsah DB (tréningy mimo seedu)
 - Či sa mŕtvy kód okolo „oldest open block" reminder ešte plánuje zapojiť
-- Preferovaná budúca navigácia (13 položiek vs pôvodných 6)
+- Preferovaná budúca navigácia (14 položiek vs pôvodných 6)

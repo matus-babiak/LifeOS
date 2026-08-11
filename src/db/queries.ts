@@ -19,6 +19,7 @@ import {
   trainings,
   visions,
   weeklyReviews,
+  progressFocusItems,
 } from "./schema";
 import { addDays, todayISO } from "@/lib/dates";
 import { isDueOn, missedYesterday, weeklyTarget } from "@/lib/habits";
@@ -755,4 +756,24 @@ export async function getContextForMentor(charBudget = 400_000) {
     used += content.length;
   }
   return out;
+}
+
+export type ProgressFocusItem = typeof progressFocusItems.$inferSelect;
+
+/** Aktívne Progress focus položky, najnovšie hore. */
+export async function getActiveProgressFocusItems() {
+  return db
+    .select()
+    .from(progressFocusItems)
+    .where(eq(progressFocusItems.status, "active"))
+    .orderBy(desc(progressFocusItems.createdAt));
+}
+
+export async function getProgressFocusItem(id: number) {
+  const [row] = await db
+    .select()
+    .from(progressFocusItems)
+    .where(eq(progressFocusItems.id, id))
+    .limit(1);
+  return row ?? null;
 }
