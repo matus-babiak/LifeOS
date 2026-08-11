@@ -14,7 +14,7 @@ Tréning (area, level 1-5, status)
 ```
 
 Ďalšie paralelné entity: check-iny, fokus, denník, tolerancie, týždenné review,
-poznámky, myšlienky, presvedčenia, progress focus, pozornosť, aktívne bloky, context dokumenty.
+poznámky, AI poznámky, myšlienky, presvedčenia, progress focus, pozornosť, aktívne bloky, context dokumenty.
 
 ## Enumy
 
