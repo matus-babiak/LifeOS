@@ -769,6 +769,15 @@ export async function getActiveProgressFocusItems() {
     .orderBy(desc(progressFocusItems.createdAt));
 }
 
+/** Hotové a odložené položky (na obnovenie). */
+export async function getClosedProgressFocusItems() {
+  return db
+    .select()
+    .from(progressFocusItems)
+    .where(inArray(progressFocusItems.status, ["done", "dismissed"]))
+    .orderBy(desc(progressFocusItems.updatedAt));
+}
+
 export async function getProgressFocusItem(id: number) {
   const [row] = await db
     .select()

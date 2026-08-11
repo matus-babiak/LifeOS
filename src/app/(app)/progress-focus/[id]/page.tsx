@@ -1,11 +1,11 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
-import FocusProgressTodayButton from "@/components/FocusProgressTodayButton";
 import { getProgressFocusItem } from "@/db/queries";
 import {
   dismissProgressFocus,
   markProgressFocusDone,
+  restoreProgressFocus,
 } from "../actions";
 
 export const metadata = { title: "Progress focus" };
@@ -35,6 +35,11 @@ export default async function ProgressFocusDetailPage({
       <header>
         <p className="text-xs uppercase tracking-wide text-muted">
           Progress focus
+          {item.status === "done"
+            ? " · Hotovo"
+            : item.status === "dismissed"
+              ? " · Odložené"
+              : ""}
         </p>
         <h1 className="mt-1 text-2xl font-semibold tracking-tight">
           {item.title}
@@ -58,7 +63,6 @@ export default async function ProgressFocusDetailPage({
 
       {item.status === "active" ? (
         <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-start">
-          <FocusProgressTodayButton itemId={item.id} />
           <form action={markProgressFocusDone.bind(null, item.id)}>
             <button
               type="submit"
@@ -77,9 +81,19 @@ export default async function ProgressFocusDetailPage({
           </form>
         </div>
       ) : (
-        <p className="text-sm text-muted">
-          Stav: {item.status === "done" ? "hotovo" : "odložené"}
-        </p>
+        <div className="flex flex-col gap-2">
+          <p className="text-sm text-muted">
+            Stav: {item.status === "done" ? "hotovo" : "odložené"}
+          </p>
+          <form action={restoreProgressFocus.bind(null, item.id)}>
+            <button
+              type="submit"
+              className="rounded-xl bg-accent px-5 py-2.5 text-sm font-medium text-white transition-opacity hover:opacity-90 dark:text-[#10141a]"
+            >
+              Obnoviť medzi aktívne
+            </button>
+          </form>
+        </div>
       )}
     </div>
   );
